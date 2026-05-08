@@ -47,35 +47,41 @@ class FrameApiController extends Controller
                                     : null;
 
                                 $last6Images[] = [
-                                    'url'                => $relativePath,
-                                    'type'               => $types[$key] ?? 'free',
-                                    'image_input_count'  => $counts[$key] ?? 1,
-                                    'frame_thumbnail'    => $thumbRelative,
+                                    '_url'              => $relativePath,
+                                    'type'              => $types[$key] ?? 'free',
+                                    'image_input_count' => $counts[$key] ?? 1,
+                                    '_frame_thumbnail'  => $thumbRelative,
                                 ];
                             }
                         }
                     }
 
                     return [
-                        'id'        => $category->id,
-                        'name'      => $category->name,
-                        'thumbnail' => 'frame/' . rawurlencode($category->name) . '/category-thumbnail-image/' . rawurlencode($category->image),
-                        'frames'    => $last6Images,
+                        'id'         => $category->id,
+                        'name'       => $category->name,
+                        '_thumbnail' => 'frame/' . rawurlencode($category->name) . '/category-thumbnail-image/' . rawurlencode($category->image),
+                        '_frames'    => $last6Images,
                     ];
                 })
-                ->filter(fn ($item) => count($item['frames']) > 0)
+                ->filter(fn ($item) => count($item['_frames']) > 0)
                 ->values()
                 ->all();
         });
 
         $data = array_map(function ($category) use ($full_url) {
-            $category['thumbnail_full_url'] = $full_url . '/' . $category['thumbnail'];
-            $category['frames'] = array_map(function ($f) use ($full_url) {
-                $f['url_full_url'] = $full_url . '/' . $f['url'];
-                $f['frame_thumbnail_full_url'] = $f['frame_thumbnail'] ? $full_url . '/' . $f['frame_thumbnail'] : null;
-                return $f;
-            }, $category['frames']);
-            return $category;
+            return [
+                'id'                  => $category['id'],
+                'name'                => $category['name'],
+                'thumbnail_full_url'  => $full_url . '/' . $category['_thumbnail'],
+                'frames'              => array_map(function ($f) use ($full_url) {
+                    return [
+                        'url_full_url'              => $full_url . '/' . $f['_url'],
+                        'type'                      => $f['type'],
+                        'image_input_count'         => $f['image_input_count'],
+                        'frame_thumbnail_full_url'  => $f['_frame_thumbnail'] ? $full_url . '/' . $f['_frame_thumbnail'] : null,
+                    ];
+                }, $category['_frames']),
+            ];
         }, $data);
 
         return response()->json([
@@ -131,20 +137,20 @@ class FrameApiController extends Controller
                             : null;
 
                         $allImages[] = [
-                            'url'                => $relativePath,
-                            'type'               => $frame->image_types[$key] ?? 'free',
-                            'image_input_count'  => $frame->image_input_counts[$key] ?? 1,
-                            'frame_thumbnail'    => $thumbRelative,
+                            '_url'              => $relativePath,
+                            'type'              => $frame->image_types[$key] ?? 'free',
+                            'image_input_count' => $frame->image_input_counts[$key] ?? 1,
+                            '_frame_thumbnail'  => $thumbRelative,
                         ];
                     }
                 }
             }
 
             return [
-                'id'        => $category->id,
-                'name'      => $category->name,
-                'thumbnail' => 'frame/' . rawurlencode($category->name) . '/category-thumbnail-image/' . rawurlencode($category->image),
-                'frames'    => $allImages,
+                'id'         => $category->id,
+                'name'       => $category->name,
+                '_thumbnail' => 'frame/' . rawurlencode($category->name) . '/category-thumbnail-image/' . rawurlencode($category->image),
+                '_frames'    => $allImages,
             ];
         });
 
@@ -156,17 +162,24 @@ class FrameApiController extends Controller
             ], 404);
         }
 
-        $cached['thumbnail_full_url'] = $full_url . '/' . $cached['thumbnail'];
-        $cached['frames'] = array_map(function ($f) use ($full_url) {
-            $f['url_full_url'] = $full_url . '/' . $f['url'];
-            $f['frame_thumbnail_full_url'] = $f['frame_thumbnail'] ? $full_url . '/' . $f['frame_thumbnail'] : null;
-            return $f;
-        }, $cached['frames']);
+        $payload = [
+            'id'                  => $cached['id'],
+            'name'                => $cached['name'],
+            'thumbnail_full_url'  => $full_url . '/' . $cached['_thumbnail'],
+            'frames'              => array_map(function ($f) use ($full_url) {
+                return [
+                    'url_full_url'              => $full_url . '/' . $f['_url'],
+                    'type'                      => $f['type'],
+                    'image_input_count'         => $f['image_input_count'],
+                    'frame_thumbnail_full_url'  => $f['_frame_thumbnail'] ? $full_url . '/' . $f['_frame_thumbnail'] : null,
+                ];
+            }, $cached['_frames']),
+        ];
 
         return response()->json([
             'status' => true,
             'message' => 'Category frames fetched successfully',
-            'data' => $cached,
+            'data' => $payload,
         ], 200);
     }
 }

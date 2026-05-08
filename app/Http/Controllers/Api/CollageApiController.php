@@ -36,19 +36,23 @@ class CollageApiController extends Controller
                         'id'         => $category->id,
                         'name'       => $category->name,
                         'type'       => $category->is_premium ? 'pro' : 'free',
-                        'thumbnail'  => 'sticker/' . rawurlencode($category->name) . '/category-thumbnail-image/' . rawurlencode($category->image),
-                        'stickers'   => $allStickers,
+                        '_thumbnail' => 'sticker/' . rawurlencode($category->name) . '/category-thumbnail-image/' . rawurlencode($category->image),
+                        '_stickers'  => $allStickers,
                     ];
                 })
-                ->filter(fn ($item) => count($item['stickers']) > 0)
+                ->filter(fn ($item) => count($item['_stickers']) > 0)
                 ->values()
                 ->all();
         });
 
         $data = array_map(function ($category) use ($full_url) {
-            $category['thumbnail_full_url'] = $full_url . '/' . $category['thumbnail'];
-            $category['stickers_full_url'] = array_map(fn ($p) => $full_url . '/' . $p, $category['stickers']);
-            return $category;
+            return [
+                'id'                  => $category['id'],
+                'name'                => $category['name'],
+                'type'                => $category['type'],
+                'thumbnail_full_url'  => $full_url . '/' . $category['_thumbnail'],
+                'stickers_full_url'   => array_map(fn ($p) => $full_url . '/' . $p, $category['_stickers']),
+            ];
         }, $data);
 
         return response()->json([
@@ -66,24 +70,25 @@ class CollageApiController extends Controller
             return Font::select(['id', 'name', 'type', 'font_preview', 'file'])
                 ->get()
                 ->map(function ($font) {
-                    $fontPreview = $font->font_preview ? 'font/' . rawurlencode($font->name) . '/' . rawurlencode($font->font_preview) : null;
-                    $fileUrl = 'font/' . rawurlencode($font->name) . '/' . rawurlencode($font->file);
-
                     return [
-                        'id'           => $font->id,
-                        'name'         => $font->name,
-                        'type'         => $font->type,
-                        'font_preview' => $fontPreview,
-                        'file_url'     => $fileUrl,
+                        'id'             => $font->id,
+                        'name'           => $font->name,
+                        'type'           => $font->type,
+                        '_font_preview'  => $font->font_preview ? 'font/' . rawurlencode($font->name) . '/' . rawurlencode($font->font_preview) : null,
+                        '_file_url'      => 'font/' . rawurlencode($font->name) . '/' . rawurlencode($font->file),
                     ];
                 })
                 ->all();
         });
 
         $data = array_map(function ($font) use ($full_url) {
-            $font['font_preview_full_url'] = $font['font_preview'] ? $full_url . '/' . $font['font_preview'] : null;
-            $font['file_url_full_url'] = $full_url . '/' . $font['file_url'];
-            return $font;
+            return [
+                'id'                      => $font['id'],
+                'name'                    => $font['name'],
+                'type'                    => $font['type'],
+                'font_preview_full_url'   => $font['_font_preview'] ? $full_url . '/' . $font['_font_preview'] : null,
+                'file_url_full_url'       => $full_url . '/' . $font['_file_url'],
+            ];
         }, $data);
 
         return response()->json([
@@ -121,15 +126,20 @@ class CollageApiController extends Controller
                         'name'        => $doodle->name,
                         'type'        => $doodle->type,
                         'doodle_type' => $doodle->doodle_type,
-                        'image'       => $image,
+                        '_image'      => $image,
                     ];
                 })
                 ->all();
         });
 
         $data = array_map(function ($doodle) use ($full_url) {
-            $doodle['image_full_url'] = $doodle['image'] ? $full_url . '/' . $doodle['image'] : null;
-            return $doodle;
+            return [
+                'id'              => $doodle['id'],
+                'name'            => $doodle['name'],
+                'type'            => $doodle['type'],
+                'doodle_type'     => $doodle['doodle_type'],
+                'image_full_url'  => $doodle['_image'] ? $full_url . '/' . $doodle['_image'] : null,
+            ];
         }, $data);
 
         return response()->json([
@@ -164,25 +174,29 @@ class CollageApiController extends Controller
                     }
 
                     return [
-                        'id'         => $category->id,
-                        'name'       => $category->name,
-                        'type'       => $category->is_premium ? 'pro' : 'free',
-                        'thumbnail'  => 'background/' . rawurlencode($category->name) . '/category-thumbnail-image/' . rawurlencode($category->image),
-                        'backgrounds' => $items,
+                        'id'           => $category->id,
+                        'name'         => $category->name,
+                        'type'         => $category->is_premium ? 'pro' : 'free',
+                        '_thumbnail'   => 'background/' . rawurlencode($category->name) . '/category-thumbnail-image/' . rawurlencode($category->image),
+                        '_backgrounds' => $items,
                     ];
                 })
-                ->filter(fn ($item) => count($item['backgrounds']) > 0)
+                ->filter(fn ($item) => count($item['_backgrounds']) > 0)
                 ->values()
                 ->all();
         });
 
         $data = array_map(function ($category) use ($full_url) {
-            $category['thumbnail_full_url']   = $full_url . '/' . $category['thumbnail'];
-            $category['backgrounds_full_url'] = array_map(
-                fn ($b) => ['path' => $full_url . '/' . $b['path'], 'is_premium' => $b['is_premium']],
-                $category['backgrounds']
-            );
-            return $category;
+            return [
+                'id'                   => $category['id'],
+                'name'                 => $category['name'],
+                'type'                 => $category['type'],
+                'thumbnail_full_url'   => $full_url . '/' . $category['_thumbnail'],
+                'backgrounds_full_url' => array_map(
+                    fn ($b) => ['path' => $full_url . '/' . $b['path'], 'is_premium' => $b['is_premium']],
+                    $category['_backgrounds']
+                ),
+            ];
         }, $data);
 
         return response()->json([

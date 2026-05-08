@@ -189,7 +189,7 @@
             $('#url-frame-cat').text(baseUrl + '/api/get_frame_category');
             $('#url-frame-by-id').text(baseUrl + '/api/get_frame_by_category_id');
             $('#url-background').text(baseUrl + '/api/get_background');
-            $('#url-get-all-filter').text(baseUrl + '/api/getallfilter');
+            $('#url-get-all-filter').text(baseUrl + '/api/get_all_filter');
         });
     </script>
 @endsection

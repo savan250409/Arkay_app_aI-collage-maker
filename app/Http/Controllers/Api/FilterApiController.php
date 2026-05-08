@@ -27,7 +27,7 @@ class FilterApiController extends Controller
                         return [
                             'id'                       => $category->id,
                             'name'                     => $category->name,
-                            'category_thumbnail_image' => 'filter_category/' . rawurlencode($category->name) . '/category-thumbnail-image/' . rawurlencode($category->image),
+                            '_category_thumbnail_image' => 'filter_category/' . rawurlencode($category->name) . '/category-thumbnail-image/' . rawurlencode($category->image),
                             'filters' => $category->filters->map(function ($filter) {
                                 return [
                                     'id'         => $filter->id,
@@ -49,8 +49,12 @@ class FilterApiController extends Controller
             });
 
             $categoryData = array_map(function ($category) use ($full_url) {
-                $category['category_thumbnail_image_full_url'] = $full_url . '/' . $category['category_thumbnail_image'];
-                return $category;
+                return [
+                    'id'                                  => $category['id'],
+                    'name'                                => $category['name'],
+                    'category_thumbnail_image_full_url'   => $full_url . '/' . $category['_category_thumbnail_image'],
+                    'filters'                             => $category['filters'],
+                ];
             }, $categoryData);
 
             return response()->json([
