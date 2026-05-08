@@ -129,6 +129,7 @@ class BackgroundCategoryController extends Controller
         // If category changed to premium, set all backgrounds to premium
         if ($newIsPremium && !$oldIsPremium) {
             Background::where('background_category_id', $backgroundCategory->id)->update(['is_premium' => 1]);
+            \App\Support\ApiCache::flushBackgrounds();
         }
 
         return redirect()->route('background-categories.index')->with('success', 'Category updated successfully.')->with('restore_bg_cat_state', true);
@@ -169,6 +170,7 @@ class BackgroundCategoryController extends Controller
         // If category set to premium, auto-set all backgrounds to premium
         if ($request->status == 1) {
             Background::where('background_category_id', $category->id)->update(['is_premium' => 1]);
+            \App\Support\ApiCache::flushBackgrounds();
         }
 
         return response()->json(['success' => true]);
@@ -194,6 +196,7 @@ class BackgroundCategoryController extends Controller
         foreach ($request->order as $order) {
             BackgroundCategory::where('id', $order['id'])->update(['row_order' => $order['row_order']]);
         }
+        \App\Support\ApiCache::flushBackgrounds();
         return response()->json(['success' => true]);
     }
 }

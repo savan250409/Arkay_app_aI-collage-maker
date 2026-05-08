@@ -160,6 +160,7 @@ class FrameCategoryController extends Controller
         foreach ($request->order as $order) {
             FrameCategory::where('id', $order['id'])->update(['row_order' => $order['row_order']]);
         }
+        \App\Support\ApiCache::flushFrames();
         return response()->json(['success' => true]);
     }
 }

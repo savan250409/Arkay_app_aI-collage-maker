@@ -180,6 +180,7 @@ class DoodleController extends Controller
         foreach ($order as $index => $id) {
             Doodle::where('id', $id)->update(['row_order' => $totalCount - $index]);
         }
+        \App\Support\ApiCache::flushDoodles();
         return response()->json(['success' => true]);
     }
 }

@@ -4,57 +4,63 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\FilterCategory;
+use App\Support\ApiCache;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class FilterApiController extends Controller
 {
     public function getAllFilters(Request $request)
     {
         try {
-            // Fetch categories with filters
-            $categories = FilterCategory::where('is_active', 1)->with([
-                'filters' => function ($query) {
-                    $query->orderBy('id', 'desc');
-                }
-            ])->orderBy('id', 'desc')->get();
-
             $full_url = url('upload');
 
-            $categoryData = $categories->map(function ($category) use ($full_url) {
-                $categoryThumbnailImage = 'filter_category/' . rawurlencode($category->name) . '/category-thumbnail-image/' . rawurlencode($category->image);
-
-                return [
-                    'id' => $category->id,
-                    'name' => $category->name,
-                    'category_thumbnail_image' => $categoryThumbnailImage,
-                    'category_thumbnail_image_full_url' => $full_url . '/' . $categoryThumbnailImage,
-                    'filters' => $category->filters->map(function ($filter) {
+            $categoryData = Cache::remember(ApiCache::KEY_FILTERS . '.payload', ApiCache::TTL, function () {
+                return FilterCategory::where('is_active', 1)
+                    ->with(['filters' => function ($query) {
+                        $query->orderBy('id', 'desc')
+                            ->select(['id', 'filter_category_id', 'name', 'type', 'saturation', 'brightness', 'contrast', 'red', 'green', 'blue']);
+                    }])
+                    ->orderBy('id', 'desc')
+                    ->get(['id', 'name', 'image', 'is_active'])
+                    ->map(function ($category) {
                         return [
-                            'id' => $filter->id,
-                            'name' => $filter->name,
-                            'type' => $filter->type,
-                            'saturation' => (double) $filter->saturation,
-                            'brightness' => (double) $filter->brightness,
-                            'contrast' => (double) $filter->contrast,
-                            'red' => (double) $filter->red,
-                            'green' => (double) $filter->green,
-                            'blue' => (double) $filter->blue,
+                            'id'                       => $category->id,
+                            'name'                     => $category->name,
+                            'category_thumbnail_image' => 'filter_category/' . rawurlencode($category->name) . '/category-thumbnail-image/' . rawurlencode($category->image),
+                            'filters' => $category->filters->map(function ($filter) {
+                                return [
+                                    'id'         => $filter->id,
+                                    'name'       => $filter->name,
+                                    'type'       => $filter->type,
+                                    'saturation' => (double) $filter->saturation,
+                                    'brightness' => (double) $filter->brightness,
+                                    'contrast'   => (double) $filter->contrast,
+                                    'red'        => (double) $filter->red,
+                                    'green'      => (double) $filter->green,
+                                    'blue'       => (double) $filter->blue,
+                                ];
+                            })->all(),
                         ];
-                    }),
-                ];
-            })->filter(function ($item) {
-                return count($item['filters']) > 0;
-            })->values();
+                    })
+                    ->filter(fn ($item) => count($item['filters']) > 0)
+                    ->values()
+                    ->all();
+            });
+
+            $categoryData = array_map(function ($category) use ($full_url) {
+                $category['category_thumbnail_image_full_url'] = $full_url . '/' . $category['category_thumbnail_image'];
+                return $category;
+            }, $categoryData);
 
             return response()->json([
                 'status' => true,
-                'categories' => $categoryData
+                'categories' => $categoryData,
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'status' => false,
-                'message' => 'Something went wrong: ' . $e->getMessage()
+                'message' => 'Something went wrong: ' . $e->getMessage(),
             ], 500);
         }
     }

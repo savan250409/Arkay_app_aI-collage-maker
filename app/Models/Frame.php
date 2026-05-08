@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\ApiCache;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -24,6 +25,12 @@ class Frame extends Model
         'image_types' => 'array',
         'frame_thumbnail' => 'array'
     ];
+
+    protected static function booted(): void
+    {
+        static::saved(fn () => ApiCache::flushFrames());
+        static::deleted(fn () => ApiCache::flushFrames());
+    }
 
     public function category()
     {

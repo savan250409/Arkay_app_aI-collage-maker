@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\ApiCache;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -16,4 +17,10 @@ class Doodle extends Model
         'type',
         'row_order'
     ];
+
+    protected static function booted(): void
+    {
+        static::saved(fn () => ApiCache::flushDoodles());
+        static::deleted(fn () => ApiCache::flushDoodles());
+    }
 }

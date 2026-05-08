@@ -1,5 +1,13 @@
 @extends('layouts.admin')
 
+@push('plugin-css')
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Dropify/0.2.2/css/dropify.min.css">
+@endpush
+
+@push('plugin-js')
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Dropify/0.2.2/js/dropify.min.js"></script>
+@endpush
+
 @section('content')
     <div class="row">
         <div class="col-12 grid-margin stretch-card">

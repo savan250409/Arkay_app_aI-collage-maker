@@ -294,6 +294,7 @@ class FrameController extends Controller
         foreach ($order as $index => $id) {
             Frame::where('id', $id)->update(['row_order' => $totalCount - $index]);
         }
+        \App\Support\ApiCache::flushFrames();
         return response()->json(['success' => true]);
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\ApiCache;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -20,6 +21,12 @@ class Filter extends Model
         'blue',
         'type'
     ];
+
+    protected static function booted(): void
+    {
+        static::saved(fn () => ApiCache::flushFilters());
+        static::deleted(fn () => ApiCache::flushFilters());
+    }
 
     public function category()
     {

@@ -9,7 +9,7 @@
         </h3>
     </div>
 
-    <div class="row">
+    <div class="row g-4">
         <!-- Get Stickers API -->
         <div class="col-md-6 grid-margin stretch-card">
             <div class="card">

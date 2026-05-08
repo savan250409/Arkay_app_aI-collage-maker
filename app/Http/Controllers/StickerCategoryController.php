@@ -183,6 +183,7 @@ class StickerCategoryController extends Controller
         foreach ($request->order as $order) {
             StickerCategory::where('id', $order['id'])->update(['row_order' => $order['row_order']]);
         }
+        \App\Support\ApiCache::flushStickers();
         return response()->json(['success' => true]);
     }
 }
