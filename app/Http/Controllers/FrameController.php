@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Frame;
 use App\Models\FrameCategory;
+use App\Support\UniqueNamer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 
@@ -88,7 +89,7 @@ class FrameController extends Controller
         foreach ($request->indices as $key => $index) {
             if ($request->hasFile("images.$index")) {
                 $image = $request->file("images")[$index];
-                $imageName = time() . '_' . $image->getClientOriginalName();
+                $imageName = UniqueNamer::uniqueFile($frameFolder, $image->getClientOriginalName());
                 $image->move($frameFolder, $imageName);
                 $storedImages[] = $imageName;
                 $storedCounts[] = $request->counts[$key];
@@ -96,7 +97,7 @@ class FrameController extends Controller
 
                 if ($request->hasFile("frame_thumbnail.$index")) {
                     $thumb = $request->file("frame_thumbnail")[$index];
-                    $thumbName = 'thumb_' . time() . '_' . $thumb->getClientOriginalName();
+                    $thumbName = UniqueNamer::uniqueFile($thumbFolder, $thumb->getClientOriginalName());
                     $thumb->move($thumbFolder, $thumbName);
                     $storedThumbnails[] = $thumbName;
                 } else {
@@ -137,6 +138,9 @@ class FrameController extends Controller
             'existing_thumbnails' => 'nullable|array',
             'counts' => 'required|array',
             'types' => 'required|array'
+        ], [
+            'images.*.mimes' => 'Only .webp images are allowed.',
+            'frame_thumbnail.*.mimes' => 'Only .webp images are allowed.'
         ]);
 
         $category = FrameCategory::findOrFail($request->frame_category_id);
@@ -165,13 +169,13 @@ class FrameController extends Controller
             if ($type == 'new') {
                 if ($request->hasFile("images.$index")) {
                     $image = $request->file("images")[$index];
-                    $imageName = time() . '_' . $image->getClientOriginalName();
+                    $imageName = UniqueNamer::uniqueFile($frameFolder, $image->getClientOriginalName());
                     $image->move($frameFolder, $imageName);
                     $storedImages[] = $imageName;
 
                     if ($request->hasFile("frame_thumbnail.$index")) {
                         $thumb = $request->file("frame_thumbnail")[$index];
-                        $thumbName = 'thumb_' . time() . '_' . $thumb->getClientOriginalName();
+                        $thumbName = UniqueNamer::uniqueFile($thumbFolder, $thumb->getClientOriginalName());
                         $thumb->move($thumbFolder, $thumbName);
                         $storedThumbnails[] = $thumbName;
                     } else {
@@ -184,7 +188,7 @@ class FrameController extends Controller
                 if ($request->hasFile("images.$index")) {
                     // New image uploaded, so we don't keep the existing one
                     $image = $request->file("images")[$index];
-                    $imageName = time() . '_' . $image->getClientOriginalName();
+                    $imageName = UniqueNamer::uniqueFile($frameFolder, $image->getClientOriginalName());
                     $image->move($frameFolder, $imageName);
                     $storedImages[] = $imageName;
                 } else {
@@ -199,7 +203,7 @@ class FrameController extends Controller
                 if ($request->hasFile("frame_thumbnail.$index")) {
                     // New thumbnail uploaded
                     $thumb = $request->file("frame_thumbnail")[$index];
-                    $thumbName = 'thumb_' . time() . '_' . $thumb->getClientOriginalName();
+                    $thumbName = UniqueNamer::uniqueFile($thumbFolder, $thumb->getClientOriginalName());
                     $thumb->move($thumbFolder, $thumbName);
                     $storedThumbnails[] = $thumbName;
                 } else {

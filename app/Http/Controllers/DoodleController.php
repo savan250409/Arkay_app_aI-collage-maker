@@ -3,18 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Models\Doodle;
+use App\Support\UniqueNamer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 
 class DoodleController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\View\View|\Illuminate\Http\JsonResponse|string
-     */
     public function index(Request $request)
     {
+        session(['doodle_list_url' => $request->fullUrl()]);
+
         $query = Doodle::query();
 
         if ($request->has('search')) {
@@ -32,83 +30,66 @@ class DoodleController extends Controller
         return view('admin.doodle.index', compact('doodles'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\View\View
-     */
     public function create()
     {
         return view('admin.doodle.form');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\RedirectResponse
-     */
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:doodles,name',
+            'name' => 'required|string|max:255',
             'image' => 'required|image|mimes:webp',
             'type' => 'required|in:free,pro',
             'doodle_type' => 'required|in:line,image'
+        ], [
+            'image.mimes' => 'Only .webp images are allowed.'
         ]);
 
-        $path = public_path('upload/doodle/' . $request->name);
+        $name = UniqueNamer::uniqueName('doodles', 'name', $request->name);
+        $path = public_path('upload/doodle/' . $name);
 
         if (!File::exists($path)) {
             File::makeDirectory($path, 0777, true, true);
         }
 
-        $imageName = $request->file('image')->getClientOriginalName();
+        $imageName = UniqueNamer::uniqueFile($path, $request->file('image')->getClientOriginalName());
         $request->file('image')->move($path, $imageName);
 
         Doodle::create([
-            'name' => $request->name,
+            'name' => $name,
             'image' => $imageName,
             'type' => $request->type,
             'doodle_type' => $request->doodle_type
         ]);
 
-        return redirect()->route('doodles.index')->with('success', 'Doodle created successfully.');
+        return redirect(session('doodle_list_url', route('doodles.index')))->with('success', 'Doodle created successfully.');
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param  \App\Models\Doodle  $doodle
-     * @return \Illuminate\View\View
-     */
     public function edit(Doodle $doodle)
     {
         return view('admin.doodle.form', compact('doodle'));
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Models\Doodle  $doodle
-     * @return \Illuminate\Http\RedirectResponse
-     */
     public function update(Request $request, Doodle $doodle)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:doodles,name,' . $doodle->id,
+            'name' => 'required|string|max:255',
             'image' => 'nullable|image|mimes:webp',
             'type' => 'required|in:free,pro',
             'doodle_type' => 'required|in:line,image'
+        ], [
+            'image.mimes' => 'Only .webp images are allowed.'
         ]);
 
+        $name = UniqueNamer::uniqueName('doodles', 'name', $request->name, $doodle->id);
+
         $oldPath = public_path('upload/doodle/' . $doodle->name);
-        $newPath = public_path('upload/doodle/' . $request->name);
+        $newPath = public_path('upload/doodle/' . $name);
 
         // Handle folder rename if name changed
-        if ($doodle->name !== $request->name) {
-            if (File::exists($oldPath)) {
+        if ($doodle->name !== $name) {
+            if (File::exists($oldPath) && !File::exists($newPath)) {
                 File::move($oldPath, $newPath);
             } else {
                 if (!File::exists($newPath)) {
@@ -131,26 +112,20 @@ class DoodleController extends Controller
                 File::delete($oldImagePath);
             }
 
-            $imageName = $request->file('image')->getClientOriginalName();
+            $imageName = UniqueNamer::uniqueFile($newPath, $request->file('image')->getClientOriginalName());
             $request->file('image')->move($newPath, $imageName);
         }
 
         $doodle->update([
-            'name' => $request->name,
+            'name' => $name,
             'image' => $imageName,
             'type' => $request->type,
             'doodle_type' => $request->doodle_type
         ]);
 
-        return redirect()->route('doodles.index')->with('success', 'Doodle updated successfully.');
+        return redirect(session('doodle_list_url', route('doodles.index')))->with('success', 'Doodle updated successfully.');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  \App\Models\Doodle  $doodle
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function destroy(Doodle $doodle)
     {
         $path = public_path('upload/doodle/' . $doodle->name);

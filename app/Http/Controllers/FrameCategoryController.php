@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\FrameCategory;
 use App\Models\Frame;
+use App\Support\UniqueNamer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 
@@ -37,20 +38,20 @@ class FrameCategoryController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:frame_categories,name',
+            'name' => 'required|string|max:255',
             'image' => 'required|image|mimes:webp'
         ], [
             'image.mimes' => 'Only .webp images are allowed.'
         ]);
 
-        $categoryName = $request->name;
-        $imageName = $request->file('image')->getClientOriginalName();
+        $categoryName = UniqueNamer::uniqueName('frame_categories', 'name', $request->name);
         $path = public_path('upload/frame/' . $categoryName . '/category-thumbnail-image');
 
         if (!File::exists($path)) {
             File::makeDirectory($path, 0777, true, true);
         }
 
+        $imageName = UniqueNamer::uniqueFile($path, $request->file('image')->getClientOriginalName());
         $request->file('image')->move($path, $imageName);
 
         FrameCategory::create([
@@ -71,20 +72,17 @@ class FrameCategoryController extends Controller
     public function update(Request $request, FrameCategory $frameCategory)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:frame_categories,name,' . $frameCategory->id,
+            'name' => 'required|string|max:255',
             'image' => 'nullable|image|mimes:webp'
         ], [
             'image.mimes' => 'Only .webp images are allowed.'
         ]);
 
-        $categoryName = $request->name;
+        $categoryName = UniqueNamer::uniqueName('frame_categories', 'name', $request->name, $frameCategory->id);
         $oldCategoryDir = public_path('upload/frame/' . $frameCategory->name);
         $newCategoryDir = public_path('upload/frame/' . $categoryName);
 
-        if ($frameCategory->name !== $categoryName && File::exists($oldCategoryDir)) {
-            if (File::exists($newCategoryDir)) {
-                return redirect()->back()->withErrors(['name' => 'A folder for the new category name already exists. Please choose a different name or clear the old folder.']);
-            }
+        if ($frameCategory->name !== $categoryName && File::exists($oldCategoryDir) && !File::exists($newCategoryDir)) {
             $moved = File::moveDirectory($oldCategoryDir, $newCategoryDir);
             if (!$moved) {
                 return redirect()->back()->withErrors(['name' => 'Failed to rename the category folder. It might be in use by another program.']);
@@ -96,17 +94,16 @@ class FrameCategoryController extends Controller
         $imageName = $frameCategory->image;
 
         if ($request->hasFile('image')) {
-            $imageName = time() . '_' . $request->file('image')->getClientOriginalName();
+            if (!File::exists($newPath)) {
+                File::makeDirectory($newPath, 0777, true, true);
+            }
 
             $oldImagePath = $newPath . '/' . $frameCategory->image;
             if (File::exists($oldImagePath)) {
                 File::delete($oldImagePath);
             }
 
-            if (!File::exists($newPath)) {
-                File::makeDirectory($newPath, 0777, true, true);
-            }
-
+            $imageName = UniqueNamer::uniqueFile($newPath, $request->file('image')->getClientOriginalName());
             $request->file('image')->move($newPath, $imageName);
         }
 

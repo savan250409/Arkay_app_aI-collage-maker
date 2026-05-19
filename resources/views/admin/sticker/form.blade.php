@@ -25,7 +25,7 @@
                                     class="text-muted">{{ isset($sticker) ? 'Update existing sticker' : 'Create a new Sticker' }}</small>
                             </div>
                         </div>
-                        <a href="{{ route('stickers.index') }}" class="btn btn-light text-primary"
+                        <a href="{{ session('sticker_list_url', route('stickers.index')) }}" class="btn btn-light text-primary"
                             style="background-color: #e9ecef;">
                             <i class="mdi mdi-arrow-left mr-1"></i> Back to Stickers
                         </a>
@@ -91,7 +91,7 @@
                         </style>
                         <div class="form-group mt-4">
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <label class="mb-0">Sticker Images (Drag &amp; drop to upload • Drag handle to reorder)</label>
+                                <label class="mb-0">Sticker Images (Drag &amp; drop to upload • Drag handle to reorder) <small class="text-warning">Only .webp images are allowed</small></label>
                                 <div>
                                     @if(isset($sticker) && !empty($sticker->images))
                                         <button type="button" class="btn btn-outline-danger btn-sm" id="delete-all-btn">
@@ -154,7 +154,7 @@
                         <div class="mt-4">
                             <button type="submit"
                                 class="btn btn-gradient-primary me-2">{{ isset($sticker) ? 'Update' : 'Submit' }}</button>
-                            <a href="{{ route('stickers.index') }}" class="btn btn-light">Cancel</a>
+                            <a href="{{ session('sticker_list_url', route('stickers.index')) }}" class="btn btn-light">Cancel</a>
                         </div>
                     </form>
                 </div>
@@ -192,11 +192,25 @@
 
             function processFiles(files) {
                 if (!files || files.length === 0) return;
+                var rejected = 0;
                 Array.from(files).forEach(function (file) {
-                    if (file && file.type && file.type.indexOf('image/') === 0) {
+                    if (!file) return;
+                    var isWebp = (file.type === 'image/webp') || /\.webp$/i.test(file.name || '');
+                    if (isWebp) {
                         addImageCard(file);
+                    } else {
+                        rejected++;
                     }
                 });
+                if (rejected > 0) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Only .webp images are allowed',
+                        text: rejected + ' file(s) were skipped because they are not .webp.',
+                        timer: 3000,
+                        showConfirmButton: false
+                    });
+                }
             }
 
             uploadZone.addEventListener('click', function (e) {

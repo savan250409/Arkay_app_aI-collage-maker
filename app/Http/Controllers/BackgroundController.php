@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Background;
 use App\Models\BackgroundCategory;
+use App\Support\UniqueNamer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 
@@ -11,31 +12,11 @@ class BackgroundController extends Controller
 {
     public function index(Request $request)
     {
-        $page = $request->page ?? 1;
-        $search = $request->search;
+        session(['bg_list_url' => $request->fullUrl()]);
+
+        $search = $request->input('search', '');
         $perPage = $request->input('per_page', 10);
-        $categoryId = $request->category_id;
-
-        if (!$request->ajax() && session('restore_bg_state') && session()->has('bg_state')) {
-            $state = session('bg_state');
-            $page = $state['page'] ?? 1;
-            $search = $state['search'] ?? '';
-            $perPage = $state['per_page'] ?? 10;
-            $categoryId = $state['category_id'] ?? '';
-
-            \Illuminate\Pagination\Paginator::currentPageResolver(function () use ($page) {
-                return $page;
-            });
-        } elseif ($request->ajax()) {
-            session([
-                'bg_state' => [
-                    'page' => $request->page,
-                    'search' => $request->search,
-                    'per_page' => $request->per_page,
-                    'category_id' => $request->category_id,
-                ]
-            ]);
-        }
+        $categoryId = $request->input('category_id', '');
 
         $categories = BackgroundCategory::orderBy('name')->get();
 
@@ -86,7 +67,7 @@ class BackgroundController extends Controller
 
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $index => $image) {
-                $imageName = $image->getClientOriginalName();
+                $imageName = UniqueNamer::uniqueFile($path, $image->getClientOriginalName());
                 $image->move($path, $imageName);
                 $isPremium = $category->is_premium ? 1 : (isset($imagePremiums[$index]) ? 1 : 0);
                 $storedImages[] = ['image' => $imageName, 'is_premium' => $isPremium];
@@ -98,7 +79,7 @@ class BackgroundController extends Controller
             'images' => $storedImages
         ]);
 
-        return redirect()->route('backgrounds.index')->with('success', 'Background(s) created successfully.')->with('restore_bg_state', true);
+        return redirect(session('bg_list_url', route('backgrounds.index')))->with('success', 'Background(s) created successfully.');
     }
 
     public function edit(Background $background)
@@ -117,6 +98,8 @@ class BackgroundController extends Controller
             'existing_premiums' => 'nullable|array',
             'new_image_premiums' => 'nullable|array',
             'item_type' => 'nullable|array'
+        ], [
+            'images.*.mimes' => 'Only .webp images are allowed.'
         ]);
 
         $category = BackgroundCategory::find($request->background_category_id);
@@ -146,7 +129,7 @@ class BackgroundController extends Controller
                 } elseif ($type == 'new') {
                     if (isset($newImagesInput[$newIdx])) {
                         $image = $newImagesInput[$newIdx];
-                        $imageName = $image->getClientOriginalName();
+                        $imageName = UniqueNamer::uniqueFile($path, $image->getClientOriginalName());
                         $image->move($path, $imageName);
                         $isPremium = $category->is_premium ? 1 : (int)($newPremiumsInput[$newIdx] ?? 0);
                         $finalImages[] = ['image' => $imageName, 'is_premium' => $isPremium];
@@ -185,7 +168,7 @@ class BackgroundController extends Controller
             'images' => $finalImages
         ]);
 
-        return redirect()->route('backgrounds.index')->with('success', 'Background updated successfully.')->with('restore_bg_state', true);
+        return redirect(session('bg_list_url', route('backgrounds.index')))->with('success', 'Background updated successfully.');
     }
 
     public function destroy(Background $background)

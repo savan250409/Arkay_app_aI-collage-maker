@@ -14,7 +14,7 @@
                                 <small class="text-muted">Update existing filter</small>
                             </div>
                         </div>
-                        <a href="{{ route('filters.index') }}" class="btn btn-light text-primary"
+                        <a href="{{ session('filter_list_url', route('filters.index')) }}" class="btn btn-light text-primary"
                             style="background-color: #e9ecef;">
                             <i class="mdi mdi-arrow-left mr-1"></i> Back to Filters
                         </a>
@@ -115,7 +115,7 @@
                         </div>
 
                         <button type="submit" class="btn btn-gradient-primary me-2">Update</button>
-                        <a href="{{ route('filters.index') }}" class="btn btn-light">Cancel</a>
+                        <a href="{{ session('filter_list_url', route('filters.index')) }}" class="btn btn-light">Cancel</a>
                     </form>
                 </div>
             </div>

@@ -162,6 +162,14 @@ class FrameApiController extends Controller
             ], 404);
         }
 
+        if (empty($cached['_frames'])) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No frames found for this category',
+                'data' => null,
+            ], 404);
+        }
+
         $payload = [
             'id'                  => $cached['id'],
             'name'                => $cached['name'],

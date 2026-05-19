@@ -14,7 +14,7 @@
                                 <small class="text-muted">Update existing category</small>
                             </div>
                         </div>
-                        <a href="{{ route('filter-categories.index') }}" class="btn btn-light text-primary"
+                        <a href="{{ session('filter_cat_list_url', route('filter-categories.index')) }}" class="btn btn-light text-primary"
                             style="background-color: #e9ecef;">
                             <i class="mdi mdi-arrow-left mr-1"></i> Back to Categories
                         </a>
@@ -36,7 +36,7 @@
 
 
                         <div class="form-group">
-                            <label>Thumbnail Image</label>
+                            <label>Thumbnail Image <small class="text-warning">Only .webp images are allowed</small></label>
                             <input type="file" name="image" class="file-upload-default" accept=".webp, image/webp"
                                 style="display:none">
                             <div class="input-group col-xs-12">
@@ -69,7 +69,7 @@
                         </div>
 
                         <button type="submit" class="btn btn-gradient-primary me-2">Update</button>
-                        <a href="{{ route('filter-categories.index') }}" class="btn btn-light">Cancel</a>
+                        <a href="{{ session('filter_cat_list_url', route('filter-categories.index')) }}" class="btn btn-light">Cancel</a>
                     </form>
                 </div>
             </div>

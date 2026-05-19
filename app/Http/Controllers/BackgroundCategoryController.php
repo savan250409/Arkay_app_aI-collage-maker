@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Background;
 use App\Models\BackgroundCategory;
+use App\Support\UniqueNamer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 
@@ -11,28 +12,10 @@ class BackgroundCategoryController extends Controller
 {
     public function index(Request $request)
     {
-        $page = $request->page ?? 1;
-        $search = $request->search;
+        session(['bg_cat_list_url' => $request->fullUrl()]);
+
+        $search = $request->input('search', '');
         $perPage = $request->input('per_page', 10);
-
-        if (!$request->ajax() && session('restore_bg_cat_state') && session()->has('bg_cat_state')) {
-            $state = session('bg_cat_state');
-            $page = $state['page'] ?? 1;
-            $search = $state['search'] ?? '';
-            $perPage = $state['per_page'] ?? 10;
-
-            \Illuminate\Pagination\Paginator::currentPageResolver(function () use ($page) {
-                return $page;
-            });
-        } elseif ($request->ajax()) {
-            session([
-                'bg_cat_state' => [
-                    'page' => $request->page,
-                    'search' => $request->search,
-                    'per_page' => $request->per_page
-                ]
-            ]);
-        }
 
         $query = BackgroundCategory::query();
         if ($search) {
@@ -56,20 +39,20 @@ class BackgroundCategoryController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:background_categories,name',
+            'name' => 'required|string|max:255',
             'image' => 'required|image|mimes:webp'
         ], [
             'image.mimes' => 'Only .webp images are allowed.'
         ]);
 
-        $categoryName = $request->name;
-        $imageName = $request->file('image')->getClientOriginalName();
+        $categoryName = UniqueNamer::uniqueName('background_categories', 'name', $request->name);
         $path = public_path('upload/background/' . $categoryName . '/category-thumbnail-image');
 
         if (!File::exists($path)) {
             File::makeDirectory($path, 0777, true, true);
         }
 
+        $imageName = UniqueNamer::uniqueFile($path, $request->file('image')->getClientOriginalName());
         $request->file('image')->move($path, $imageName);
 
         BackgroundCategory::create([
@@ -80,7 +63,7 @@ class BackgroundCategoryController extends Controller
             'row_order' => BackgroundCategory::max('row_order') + 1
         ]);
 
-        return redirect()->route('background-categories.index')->with('success', 'Category created successfully.')->with('restore_bg_cat_state', true);
+        return redirect(session('bg_cat_list_url', route('background-categories.index')))->with('success', 'Category created successfully.');
     }
 
     public function edit(BackgroundCategory $backgroundCategory)
@@ -91,28 +74,38 @@ class BackgroundCategoryController extends Controller
     public function update(Request $request, BackgroundCategory $backgroundCategory)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:background_categories,name,' . $backgroundCategory->id,
+            'name' => 'required|string|max:255',
+            'image' => 'nullable|image|mimes:webp',
+        ], [
+            'image.mimes' => 'Only .webp images are allowed.'
         ]);
 
-        $categoryName = $request->name;
+        $categoryName = UniqueNamer::uniqueName('background_categories', 'name', $request->name, $backgroundCategory->id);
+
+        // Rename the folder if name changed
+        if ($backgroundCategory->name !== $categoryName) {
+            $oldFolder = public_path('upload/background/' . $backgroundCategory->name);
+            $newFolder = public_path('upload/background/' . $categoryName);
+            if (File::exists($oldFolder) && !File::exists($newFolder)) {
+                File::move($oldFolder, $newFolder);
+            }
+        }
+
         $newPath = public_path('upload/background/' . $categoryName . '/category-thumbnail-image');
 
         $imageName = $backgroundCategory->image;
 
         if ($request->hasFile('image')) {
-            $imageName = $request->file('image')->getClientOriginalName();
-
-            $oldPath = public_path('upload/background/' . $backgroundCategory->name . '/category-thumbnail-image');
-            $oldImagePath = $oldPath . '/' . $backgroundCategory->image;
-
-            if (File::exists($oldImagePath)) {
-                File::delete($oldImagePath);
-            }
-
             if (!File::exists($newPath)) {
                 File::makeDirectory($newPath, 0777, true, true);
             }
 
+            $oldImagePath = $newPath . '/' . $backgroundCategory->image;
+            if (File::exists($oldImagePath)) {
+                File::delete($oldImagePath);
+            }
+
+            $imageName = UniqueNamer::uniqueFile($newPath, $request->file('image')->getClientOriginalName());
             $request->file('image')->move($newPath, $imageName);
         }
 
@@ -132,7 +125,7 @@ class BackgroundCategoryController extends Controller
             \App\Support\ApiCache::flushBackgrounds();
         }
 
-        return redirect()->route('background-categories.index')->with('success', 'Category updated successfully.')->with('restore_bg_cat_state', true);
+        return redirect(session('bg_cat_list_url', route('background-categories.index')))->with('success', 'Category updated successfully.');
     }
 
     public function destroy(BackgroundCategory $backgroundCategory)

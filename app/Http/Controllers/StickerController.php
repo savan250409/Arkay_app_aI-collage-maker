@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Sticker;
 use App\Models\StickerCategory;
+use App\Support\UniqueNamer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 
@@ -11,31 +12,11 @@ class StickerController extends Controller
 {
     public function index(Request $request)
     {
-        $page = $request->page ?? 1;
-        $search = $request->search;
+        session(['sticker_list_url' => $request->fullUrl()]);
+
+        $search = $request->input('search', '');
         $perPage = $request->input('per_page', 10);
-        $categoryId = $request->category_id;
-
-        if (!$request->ajax() && session('restore_sticker_state') && session()->has('sticker_state')) {
-            $state = session('sticker_state');
-            $page = $state['page'] ?? 1;
-            $search = $state['search'] ?? '';
-            $perPage = $state['per_page'] ?? 10;
-            $categoryId = $state['category_id'] ?? '';
-
-            \Illuminate\Pagination\Paginator::currentPageResolver(function () use ($page) {
-                return $page;
-            });
-        } elseif ($request->ajax()) {
-            session([
-                'sticker_state' => [
-                    'page' => $request->page,
-                    'search' => $request->search,
-                    'per_page' => $request->per_page,
-                    'category_id' => $request->category_id,
-                ]
-            ]);
-        }
+        $categoryId = $request->input('category_id', '');
 
         $categories = StickerCategory::orderBy('name')->get();
 
@@ -86,7 +67,7 @@ class StickerController extends Controller
 
         if ($request->hasFile('images')) {
             foreach ($request->file('images') as $image) {
-                $imageName = $image->getClientOriginalName();
+                $imageName = UniqueNamer::uniqueFile($path, $image->getClientOriginalName());
                 $image->move($path, $imageName);
                 $storedImages[] = $imageName;
             }
@@ -97,7 +78,7 @@ class StickerController extends Controller
             'images' => $storedImages
         ]);
 
-        return redirect()->route('stickers.index')->with('success', 'Sticker created successfully.')->with('restore_sticker_state', true);
+        return redirect(session('sticker_list_url', route('stickers.index')))->with('success', 'Sticker created successfully.');
     }
 
     public function edit(Sticker $sticker)
@@ -114,6 +95,8 @@ class StickerController extends Controller
             'images.*' => 'image|mimes:webp',
             'existing_images' => 'nullable|array',
             'item_type' => 'nullable|array'
+        ], [
+            'images.*.mimes' => 'Only .webp images are allowed.'
         ]);
 
         $category = StickerCategory::find($request->sticker_category_id);
@@ -142,7 +125,7 @@ class StickerController extends Controller
                 } elseif ($type == 'new') {
                     if (isset($newImagesInput[$newImageIndex])) {
                         $image = $newImagesInput[$newImageIndex];
-                        $imageName = $image->getClientOriginalName();
+                        $imageName = UniqueNamer::uniqueFile($path, $image->getClientOriginalName());
                         $image->move($path, $imageName);
 
                         $finalImages[] = $imageName;
@@ -177,7 +160,7 @@ class StickerController extends Controller
             'images' => $finalImages
         ]);
 
-        return redirect()->route('stickers.index')->with('success', 'Sticker updated successfully.')->with('restore_sticker_state', true);
+        return redirect(session('sticker_list_url', route('stickers.index')))->with('success', 'Sticker updated successfully.');
     }
 
     public function destroy(Sticker $sticker)

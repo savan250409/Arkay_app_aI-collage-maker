@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Sticker;
 use App\Models\StickerCategory;
+use App\Support\UniqueNamer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 
@@ -11,28 +12,10 @@ class StickerCategoryController extends Controller
 {
     public function index(Request $request)
     {
-        $page = $request->page ?? 1;
-        $search = $request->search;
+        session(['sticker_cat_list_url' => $request->fullUrl()]);
+
+        $search = $request->input('search', '');
         $perPage = $request->input('per_page', 10);
-
-        if (!$request->ajax() && session('restore_sticker_cat_state') && session()->has('sticker_cat_state')) {
-            $state = session('sticker_cat_state');
-            $page = $state['page'] ?? 1;
-            $search = $state['search'] ?? '';
-            $perPage = $state['per_page'] ?? 10;
-
-            \Illuminate\Pagination\Paginator::currentPageResolver(function () use ($page) {
-                return $page;
-            });
-        } elseif ($request->ajax()) {
-            session([
-                'sticker_cat_state' => [
-                    'page' => $request->page,
-                    'search' => $request->search,
-                    'per_page' => $request->per_page
-                ]
-            ]);
-        }
 
         $query = StickerCategory::query();
         if ($search) {
@@ -56,20 +39,20 @@ class StickerCategoryController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:sticker_categories,name',
+            'name' => 'required|string|max:255',
             'image' => 'required|image|mimes:webp'
         ], [
             'image.mimes' => 'Only .webp images are allowed.'
         ]);
 
-        $categoryName = $request->name;
-        $imageName = $request->file('image')->getClientOriginalName();
+        $categoryName = UniqueNamer::uniqueName('sticker_categories', 'name', $request->name);
         $path = public_path('upload/sticker/' . $categoryName . '/category-thumbnail-image');
 
         if (!File::exists($path)) {
             File::makeDirectory($path, 0777, true, true);
         }
 
+        $imageName = UniqueNamer::uniqueFile($path, $request->file('image')->getClientOriginalName());
         $request->file('image')->move($path, $imageName);
 
         StickerCategory::create([
@@ -80,7 +63,7 @@ class StickerCategoryController extends Controller
             'row_order' => StickerCategory::max('row_order') + 1
         ]);
 
-        return redirect()->route('sticker-categories.index')->with('success', 'Category created successfully.')->with('restore_sticker_cat_state', true);
+        return redirect(session('sticker_cat_list_url', route('sticker-categories.index')))->with('success', 'Category created successfully.');
     }
 
     public function edit(StickerCategory $stickerCategory)
@@ -91,28 +74,38 @@ class StickerCategoryController extends Controller
     public function update(Request $request, StickerCategory $stickerCategory)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:sticker_categories,name,' . $stickerCategory->id,
+            'name' => 'required|string|max:255',
+            'image' => 'nullable|image|mimes:webp',
+        ], [
+            'image.mimes' => 'Only .webp images are allowed.'
         ]);
 
-        $categoryName = $request->name;
+        $categoryName = UniqueNamer::uniqueName('sticker_categories', 'name', $request->name, $stickerCategory->id);
+
+        // Rename the folder if name changed
+        if ($stickerCategory->name !== $categoryName) {
+            $oldFolder = public_path('upload/sticker/' . $stickerCategory->name);
+            $newFolder = public_path('upload/sticker/' . $categoryName);
+            if (File::exists($oldFolder) && !File::exists($newFolder)) {
+                File::move($oldFolder, $newFolder);
+            }
+        }
+
         $newPath = public_path('upload/sticker/' . $categoryName . '/category-thumbnail-image');
 
         $imageName = $stickerCategory->image;
 
         if ($request->hasFile('image')) {
-            $imageName = $request->file('image')->getClientOriginalName();
-
-            $oldPath = public_path('upload/sticker/' . $stickerCategory->name . '/category-thumbnail-image');
-            $oldImagePath = $oldPath . '/' . $stickerCategory->image;
-
-            if (File::exists($oldImagePath)) {
-                File::delete($oldImagePath);
-            }
-
             if (!File::exists($newPath)) {
                 File::makeDirectory($newPath, 0777, true, true);
             }
 
+            $oldImagePath = $newPath . '/' . $stickerCategory->image;
+            if (File::exists($oldImagePath)) {
+                File::delete($oldImagePath);
+            }
+
+            $imageName = UniqueNamer::uniqueFile($newPath, $request->file('image')->getClientOriginalName());
             $request->file('image')->move($newPath, $imageName);
         }
 
@@ -123,7 +116,7 @@ class StickerCategoryController extends Controller
             'is_active' => $request->has('is_active') ? 1 : 0
         ]);
 
-        return redirect()->route('sticker-categories.index')->with('success', 'Category updated successfully.')->with('restore_sticker_cat_state', true);
+        return redirect(session('sticker_cat_list_url', route('sticker-categories.index')))->with('success', 'Category updated successfully.');
     }
 
     public function destroy(StickerCategory $stickerCategory)

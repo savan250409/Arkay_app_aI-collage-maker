@@ -21,7 +21,7 @@
                                 <small class="text-muted">{{ isset($frame) ? 'Update existing frame' : 'Create a new Frame' }}</small>
                             </div>
                         </div>
-                        <a href="{{ route('frames.index') }}" class="btn btn-light text-primary" style="background-color: #e9ecef;">
+                        <a href="{{ session('frame_list_url', route('frames.index')) }}" class="btn btn-light text-primary" style="background-color: #e9ecef;">
                             <i class="mdi mdi-arrow-left mr-1"></i> Back to Frames
                         </a>
                     </div>
@@ -67,7 +67,7 @@
 
                         <!-- Combined Sortable Image List -->
                         <div class="form-group mt-4">
-                            <label>Frame Images (Drag to Reorder)</label>
+                            <label>Frame Images (Drag to Reorder) <small class="text-warning">Only .webp images are allowed</small></label>
                             <div id="sortable-images">
                                 @if(isset($frame) && !empty($frame->images))
                                     @foreach($frame->images as $index => $img)
@@ -171,7 +171,7 @@
                         <div class="mt-4">
                             <button type="submit"
                                 class="btn btn-gradient-primary me-2">{{ isset($frame) ? 'Update' : 'Submit' }}</button>
-                            <a href="{{ route('frames.index') }}" class="btn btn-light">Cancel</a>
+                            <a href="{{ session('frame_list_url', route('frames.index')) }}" class="btn btn-light">Cancel</a>
                         </div>
                     </form>
                 </div>

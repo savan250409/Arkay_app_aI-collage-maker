@@ -17,7 +17,7 @@
                                     class="text-muted">{{ isset($stickerCategory) ? 'Update existing category' : 'Create a new Sticker Category' }}</small>
                             </div>
                         </div>
-                        <a href="{{ route('sticker-categories.index') }}" class="btn btn-light text-primary"
+                        <a href="{{ session('sticker_cat_list_url', route('sticker-categories.index')) }}" class="btn btn-light text-primary"
                             style="background-color: #e9ecef;">
                             <i class="mdi mdi-arrow-left mr-1"></i> Back to Categories
                         </a>
@@ -40,7 +40,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label>Thumbnail Image</label>
+                            <label>Thumbnail Image <small class="text-warning">Only .webp images are allowed</small></label>
                             <input type="file" name="image" class="file-upload-default" accept=".webp, image/webp" style="display:none">
                             <div class="input-group col-xs-12">
                                 <input type="text" class="form-control file-upload-info" disabled
@@ -82,7 +82,7 @@
 
                         <button type="submit"
                             class="btn btn-gradient-primary me-2">{{ isset($stickerCategory) ? 'Update' : 'Submit' }}</button>
-                        <a href="{{ route('sticker-categories.index') }}" class="btn btn-light">Cancel</a>
+                        <a href="{{ session('sticker_cat_list_url', route('sticker-categories.index')) }}" class="btn btn-light">Cancel</a>
                     </form>
                 </div>
             </div>

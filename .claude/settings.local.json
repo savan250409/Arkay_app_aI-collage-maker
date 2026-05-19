@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php -l app/Http/Controllers/BackgroundController.php app/Http/Controllers/BackgroundCategoryController.php app/Http/Controllers/StickerController.php app/Http/Controllers/StickerCategoryController.php app/Http/Controllers/FilterController.php app/Http/Controllers/FilterCategoryController.php app/Http/Controllers/DoodleController.php app/Http/Controllers/FontController.php app/Http/Controllers/FrameController.php app/Http/Controllers/FrameCategoryController.php app/Http/Controllers/Api/FrameApiController.php app/Support/UniqueNamer.php)",
+      "Bash(php artisan *)"
+    ]
+  }
+}

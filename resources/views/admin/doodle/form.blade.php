@@ -16,7 +16,7 @@
                                     class="text-muted">{{ isset($doodle) ? 'Update existing doodle' : 'Create a new Doodle' }}</small>
                             </div>
                         </div>
-                        <a href="{{ route('doodles.index') }}" class="btn btn-light text-primary"
+                        <a href="{{ session('doodle_list_url', route('doodles.index')) }}" class="btn btn-light text-primary"
                             style="background-color: #e9ecef;">
                             <i class="mdi mdi-arrow-left mr-1"></i> Back to Doodles
                         </a>
@@ -81,7 +81,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label>Doodle Image</label>
+                            <label>Doodle Image <small class="text-warning">Only .webp images are allowed</small></label>
                             @if(isset($doodle) && $doodle->image)
                                 <div class="mb-2">
                                     @php
@@ -120,7 +120,7 @@
                         <div class="mt-4">
                             <button type="submit"
                                 class="btn btn-gradient-primary me-2">{{ isset($doodle) ? 'Update' : 'Submit' }}</button>
-                            <a href="{{ route('doodles.index') }}" class="btn btn-light">Cancel</a>
+                            <a href="{{ session('doodle_list_url', route('doodles.index')) }}" class="btn btn-light">Cancel</a>
                         </div>
                     </form>
                 </div>

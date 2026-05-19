@@ -25,7 +25,7 @@
                                     class="text-muted">{{ isset($font) ? 'Update existing font' : 'Create a new font' }}</small>
                             </div>
                         </div>
-                        <a href="{{ route('fonts.index') }}" class="btn btn-light text-primary"
+                        <a href="{{ session('font_list_url', route('fonts.index')) }}" class="btn btn-light text-primary"
                             style="background-color: #e9ecef;">
                             <i class="mdi mdi-arrow-left mr-1"></i> Back to Fonts
                         </a>
@@ -74,7 +74,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label>Font Preview Image</label>
+                            <label>Font Preview Image <small class="text-warning">Only .webp images are allowed</small></label>
                             @if(isset($font) && $font->font_preview)
                                 <div class="mb-2">
                                     <small class="text-muted">Current preview: {{ $font->font_preview }}</small>
@@ -105,7 +105,7 @@
                         <div class="mt-4">
                             <button type="submit"
                                 class="btn btn-gradient-primary me-2">{{ isset($font) ? 'Update' : 'Submit' }}</button>
-                            <a href="{{ route('fonts.index') }}" class="btn btn-light">Cancel</a>
+                            <a href="{{ session('font_list_url', route('fonts.index')) }}" class="btn btn-light">Cancel</a>
                         </div>
                     </form>
                 </div>

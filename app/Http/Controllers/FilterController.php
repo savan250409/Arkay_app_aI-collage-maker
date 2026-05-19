@@ -4,12 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Filter;
 use App\Models\FilterCategory;
+use App\Support\UniqueNamer;
 use Illuminate\Http\Request;
 
 class FilterController extends Controller
 {
     public function index(Request $request)
     {
+        session(['filter_list_url' => $request->fullUrl()]);
+
         $search = $request->input('search', '');
         $categoryId = $request->input('category_id', '');
         $perPage = $request->input('per_page', 10);
@@ -50,12 +53,15 @@ class FilterController extends Controller
             'red' => 'required|numeric',
             'green' => 'required|numeric',
             'blue' => 'required|numeric',
-            'type' => 'required|in:free,pro', // Added type validation
+            'type' => 'required|in:free,pro',
         ]);
 
-        Filter::create($request->all());
+        $data = $request->all();
+        $data['name'] = UniqueNamer::uniqueName('filters', 'name', $request->name);
 
-        return redirect()->route('filters.index')->with('success', 'Filter created successfully.');
+        Filter::create($data);
+
+        return redirect(session('filter_list_url', route('filters.index')))->with('success', 'Filter created successfully.');
     }
 
     public function edit(Filter $filter)
@@ -75,12 +81,15 @@ class FilterController extends Controller
             'red' => 'required|numeric',
             'green' => 'required|numeric',
             'blue' => 'required|numeric',
-            'type' => 'required|in:free,pro', // Added type validation
+            'type' => 'required|in:free,pro',
         ]);
 
-        $filter->update($request->all());
+        $data = $request->all();
+        $data['name'] = UniqueNamer::uniqueName('filters', 'name', $request->name, $filter->id);
 
-        return redirect()->route('filters.index')->with('success', 'Filter updated successfully.');
+        $filter->update($data);
+
+        return redirect(session('filter_list_url', route('filters.index')))->with('success', 'Filter updated successfully.');
     }
 
     public function destroy(Filter $filter)
@@ -151,10 +160,10 @@ class FilterController extends Controller
                 ]
             );
 
-            // Create Filter
+            // Create Filter (auto-append timestamp if name already exists)
             Filter::create([
                 'filter_category_id' => $category->id,
-                'name' => $filterName,
+                'name' => UniqueNamer::uniqueName('filters', 'name', $filterName),
                 'saturation' => $saturation,
                 'brightness' => $brightness,
                 'contrast' => $contrast,

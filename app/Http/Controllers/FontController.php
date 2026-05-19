@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Font;
+use App\Support\UniqueNamer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
 
@@ -10,6 +11,8 @@ class FontController extends Controller
 {
     public function index(Request $request)
     {
+        session(['font_list_url' => $request->fullUrl()]);
+
         $query = Font::query();
 
         if ($request->has('search')) {
@@ -35,13 +38,16 @@ class FontController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:fonts,name',
+            'name' => 'required|string|max:255',
             'file' => 'required|file',
             'font_preview' => 'nullable|image|mimes:webp',
             'type' => 'required|in:free,pro'
+        ], [
+            'font_preview.mimes' => 'Only .webp images are allowed.'
         ]);
 
-        $path = public_path('upload/font/' . $request->name);
+        $name = UniqueNamer::uniqueName('fonts', 'name', $request->name);
+        $path = public_path('upload/font/' . $name);
 
         if (!File::exists($path)) {
             File::makeDirectory($path, 0777, true, true);
@@ -49,25 +55,25 @@ class FontController extends Controller
 
         if ($request->hasFile('file')) {
             $file = $request->file('file');
-            $fileName = $file->getClientOriginalName();
+            $fileName = UniqueNamer::uniqueFile($path, $file->getClientOriginalName());
             $file->move($path, $fileName);
 
             $previewName = null;
             if ($request->hasFile('font_preview')) {
                 $preview = $request->file('font_preview');
-                $previewName = $preview->getClientOriginalName();
+                $previewName = UniqueNamer::uniqueFile($path, $preview->getClientOriginalName());
                 $preview->move($path, $previewName);
             }
 
             Font::create([
-                'name' => $request->name,
+                'name' => $name,
                 'file' => $fileName,
                 'type' => $request->type,
                 'font_preview' => $previewName
             ]);
         }
 
-        return redirect()->route('fonts.index')->with('success', 'Font created successfully.');
+        return redirect(session('font_list_url', route('fonts.index')))->with('success', 'Font created successfully.');
     }
 
     public function edit(Font $font)
@@ -78,74 +84,73 @@ class FontController extends Controller
     public function update(Request $request, Font $font)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:fonts,name,' . $font->id,
+            'name' => 'required|string|max:255',
             'file' => 'nullable|file',
             'font_preview' => 'nullable|image|mimes:webp',
             'type' => 'required|in:free,pro'
+        ], [
+            'font_preview.mimes' => 'Only .webp images are allowed.'
         ]);
 
+        $name = UniqueNamer::uniqueName('fonts', 'name', $request->name, $font->id);
+
         $updateData = [
-            'name' => $request->name,
+            'name' => $name,
             'type' => $request->type
         ];
 
-        if ($request->hasFile('file')) {
-            $path = public_path('upload/font/' . $request->name);
-
-            if (!File::exists($path)) {
-                File::makeDirectory($path, 0777, true, true);
-            }
-
+        if ($font->name !== $name) {
             $oldPath = public_path('upload/font/' . $font->name);
-            $oldFilePath = $oldPath . '/' . $font->file;
-
-            if (File::exists($oldFilePath)) {
-                File::delete($oldFilePath);
-            }
-
-            $file = $request->file('file');
-            $fileName = $file->getClientOriginalName();
-            $file->move($path, $fileName);
-
-            $updateData['file'] = $fileName;
-        }
-
-        if ($request->hasFile('font_preview')) {
-            $path = public_path('upload/font/' . $request->name);
-            if (!File::exists($path)) {
-                File::makeDirectory($path, 0777, true, true);
-            }
-
-            // Only delete old preview if we are uploading a new one
-            if ($font->font_preview) {
-                $oldPreviewPath = public_path('upload/font/' . $font->name . '/' . $font->font_preview);
-                if (File::exists($oldPreviewPath)) {
-                    File::delete($oldPreviewPath);
-                }
-            }
-
-            $preview = $request->file('font_preview');
-            $previewName = $preview->getClientOriginalName();
-            $preview->move($path, $previewName);
-
-            $updateData['font_preview'] = $previewName;
-        }
-
-        if ($font->name !== $request->name) {
-            // Handle renaming folder if name changed (and no new file uploaded, handled above partly, but complex if both change)
-            // Simplified: The original code only moved if filenot changed.
-            // If name changes, we should move the folder.
-            $oldPath = public_path('upload/font/' . $font->name);
-            $newPath = public_path('upload/font/' . $request->name);
+            $newPath = public_path('upload/font/' . $name);
 
             if (File::exists($oldPath) && !File::exists($newPath)) {
                 File::move($oldPath, $newPath);
             }
         }
 
+        if ($request->hasFile('file')) {
+            $path = public_path('upload/font/' . $name);
+
+            if (!File::exists($path)) {
+                File::makeDirectory($path, 0777, true, true);
+            }
+
+            $oldFilePath = $path . '/' . $font->file;
+
+            if (File::exists($oldFilePath)) {
+                File::delete($oldFilePath);
+            }
+
+            $file = $request->file('file');
+            $fileName = UniqueNamer::uniqueFile($path, $file->getClientOriginalName());
+            $file->move($path, $fileName);
+
+            $updateData['file'] = $fileName;
+        }
+
+        if ($request->hasFile('font_preview')) {
+            $path = public_path('upload/font/' . $name);
+            if (!File::exists($path)) {
+                File::makeDirectory($path, 0777, true, true);
+            }
+
+            if ($font->font_preview) {
+                $oldPreviewPath = $path . '/' . $font->font_preview;
+                if (File::exists($oldPreviewPath)) {
+                    File::delete($oldPreviewPath);
+                }
+            }
+
+            $preview = $request->file('font_preview');
+            $previewName = UniqueNamer::uniqueFile($path, $preview->getClientOriginalName());
+            $preview->move($path, $previewName);
+
+            $updateData['font_preview'] = $previewName;
+        }
+
         $font->update($updateData);
 
-        return redirect()->route('fonts.index')->with('success', 'Font updated successfully.');
+        return redirect(session('font_list_url', route('fonts.index')))->with('success', 'Font updated successfully.');
     }
 
     public function destroy(Font $font)
