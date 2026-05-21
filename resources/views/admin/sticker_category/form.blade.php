@@ -52,7 +52,7 @@
                             </div>
                             @if(isset($stickerCategory) && $stickerCategory->image)
                                 <div class="mt-2">
-                                    <img src="{{ asset('upload/sticker/' . $stickerCategory->name . '/category-thumbnail-image/' . $stickerCategory->image) }}"
+                                    <img src="{{ asset('upload/sticker/' . $stickerCategory->name . '/category image/' . $stickerCategory->image) }}"
                                         alt="Current Image" style="width: 100px;">
                                 </div>
                             @endif

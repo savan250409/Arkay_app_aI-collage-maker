@@ -36,7 +36,7 @@ class CollageApiController extends Controller
                         'id'         => $category->id,
                         'name'       => $category->name,
                         'type'       => $category->is_premium ? 'pro' : 'free',
-                        '_thumbnail' => 'sticker/' . rawurlencode($category->name) . '/category-thumbnail-image/' . rawurlencode($category->image),
+                        '_thumbnail' => 'sticker/' . rawurlencode($category->name) . '/category image/' . rawurlencode($category->image),
                         '_stickers'  => $allStickers,
                     ];
                 })

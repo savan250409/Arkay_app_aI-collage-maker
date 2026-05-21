@@ -49,7 +49,7 @@
                             </div>
                             @if($filterCategory->image)
                                 <div class="mt-2">
-                                    <img src="{{ asset('upload/filter_category/' . $filterCategory->name . '/category-thumbnail-image/' . $filterCategory->image) }}"
+                                    <img src="{{ asset('upload/filter_category/' . $filterCategory->name . '/category image/' . $filterCategory->image) }}"
                                         alt="Current Image" style="width: 100px;">
                                 </div>
                             @endif

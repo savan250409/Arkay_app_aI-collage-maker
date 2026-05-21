@@ -27,7 +27,7 @@ class FilterApiController extends Controller
                         return [
                             'id'                       => $category->id,
                             'name'                     => $category->name,
-                            '_category_thumbnail_image' => 'filter_category/' . rawurlencode($category->name) . '/category-thumbnail-image/' . rawurlencode($category->image),
+                            '_category_thumbnail_image' => 'filter_category/' . rawurlencode($category->name) . '/category image/' . rawurlencode($category->image),
                             'filters' => $category->filters->map(function ($filter) {
                                 return [
                                     'id'         => $filter->id,

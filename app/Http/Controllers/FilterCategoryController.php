@@ -42,7 +42,7 @@ class FilterCategoryController extends Controller
         ]);
 
         $categoryName = UniqueNamer::uniqueName('filter_categories', 'name', $request->name);
-        $path = public_path('upload/filter_category/' . $categoryName . '/category-thumbnail-image');
+        $path = public_path('upload/filter_category/' . $categoryName . '/category image');
 
         if (!File::exists($path)) {
             File::makeDirectory($path, 0777, true, true);
@@ -86,7 +86,7 @@ class FilterCategoryController extends Controller
             }
         }
 
-        $targetPath = public_path('upload/filter_category/' . $categoryName . '/category-thumbnail-image');
+        $targetPath = public_path('upload/filter_category/' . $categoryName . '/category image');
 
         if ($request->hasFile('image')) {
             if (!File::exists($targetPath)) {

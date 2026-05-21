@@ -100,7 +100,7 @@
                                             <td>{{ $category->id }}</td>
                                             <td>{{ $category->name }}</td>
                                             <td>
-                                                <img src="{{ asset('upload/sticker/' . $category->name . '/category-thumbnail-image/' . $category->image) }}"
+                                                <img src="{{ asset('upload/sticker/' . $category->name . '/category image/' . $category->image) }}"
                                                     alt="image" style="width: 50px; height: 50px; border-radius: 0;">
                                             </td>
                                             <td>

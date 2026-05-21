@@ -46,7 +46,7 @@ class StickerCategoryController extends Controller
         ]);
 
         $categoryName = UniqueNamer::uniqueName('sticker_categories', 'name', $request->name);
-        $path = public_path('upload/sticker/' . $categoryName . '/category-thumbnail-image');
+        $path = public_path('upload/sticker/' . $categoryName . '/category image');
 
         if (!File::exists($path)) {
             File::makeDirectory($path, 0777, true, true);
@@ -91,7 +91,7 @@ class StickerCategoryController extends Controller
             }
         }
 
-        $newPath = public_path('upload/sticker/' . $categoryName . '/category-thumbnail-image');
+        $newPath = public_path('upload/sticker/' . $categoryName . '/category image');
 
         $imageName = $stickerCategory->image;
 
@@ -134,7 +134,7 @@ class StickerCategoryController extends Controller
             $sticker->delete();
         }
 
-        $thumbnailPath = public_path('upload/sticker/' . $stickerCategory->name . '/category-thumbnail-image/' . $stickerCategory->image);
+        $thumbnailPath = public_path('upload/sticker/' . $stickerCategory->name . '/category image/' . $stickerCategory->image);
         if (File::exists($thumbnailPath)) {
             File::delete($thumbnailPath);
         }

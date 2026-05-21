@@ -82,7 +82,7 @@
                                             <td>{{ $category->id }}</td>
                                             <td>{{ $category->name }}</td>
                                             <td>
-                                                <img src="{{ asset('upload/filter_category/' . $category->name . '/category-thumbnail-image/' . $category->image) }}"
+                                                <img src="{{ asset('upload/filter_category/' . $category->name . '/category image/' . $category->image) }}"
                                                     alt="image" class="img-thumbnail" style="width: 50px; height: 50px;">
                                             </td>
                                             <td>
