@@ -74,8 +74,8 @@
                                         @if(is_string($img))
                                             <div class="image-input-row mb-3 border p-2 rounded" style="background: #f9f9f9;">
                                                 <input type="hidden" name="item_type[]" value="existing">
-                                                <input type="hidden" name="existing_images[]" value="{{ $img }}">
-                                                <input type="hidden" name="existing_thumbnails[]" value="{{ $frame->frame_thumbnail[$index] ?? '' }}">
+                                                <input type="hidden" name="existing_images[{{ $index }}]" value="{{ $img }}">
+                                                <input type="hidden" name="existing_thumbnails[{{ $index }}]" value="{{ $frame->frame_thumbnail[$index] ?? '' }}">
                                                 <input type="hidden" name="indices[]" value="{{ $index }}">
                                                 
                                                 <div class="row align-items-center">

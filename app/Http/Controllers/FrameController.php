@@ -183,7 +183,7 @@ class FrameController extends Controller
                     }
                 }
             } else {
-                $existingImage = $request->existing_images[$key] ?? null;
+                $existingImage = $request->input("existing_images.$index");
 
                 if ($request->hasFile("images.$index")) {
                     // New image uploaded, so we don't keep the existing one
@@ -198,7 +198,7 @@ class FrameController extends Controller
                     }
                 }
 
-                $existingThumb = $request->existing_thumbnails[$key] ?? null;
+                $existingThumb = $request->input("existing_thumbnails.$index");
 
                 if ($request->hasFile("frame_thumbnail.$index")) {
                     // New thumbnail uploaded
