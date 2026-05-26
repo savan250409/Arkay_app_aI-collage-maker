@@ -68,12 +68,13 @@ class CollageApiController extends Controller
 
         $data = Cache::remember(ApiCache::KEY_FONTS . '.payload', ApiCache::TTL, function () {
             return Font::select(['id', 'name', 'type', 'font_preview', 'file'])
+                ->orderBy('id', 'DESC')
                 ->get()
                 ->map(function ($font) {
                     return [
                         'id'             => $font->id,
                         'name'           => $font->name,
-                        'type'           => $font->type,
+                        'type'           => $font->type ?: 'free',
                         '_font_preview'  => $font->font_preview ? 'font/' . rawurlencode($font->name) . '/' . rawurlencode($font->font_preview) : null,
                         '_file_url'      => 'font/' . rawurlencode($font->name) . '/' . rawurlencode($font->file),
                     ];
@@ -85,7 +86,7 @@ class CollageApiController extends Controller
             return [
                 'id'                      => $font['id'],
                 'name'                    => $font['name'],
-                'type'                    => $font['type'],
+                'type'                    => $font['type'] ?: 'free',
                 'font_preview_full_url'   => $font['_font_preview'] ? $full_url . '/' . $font['_font_preview'] : null,
                 'file_url_full_url'       => $full_url . '/' . $font['_file_url'],
             ];
@@ -104,8 +105,8 @@ class CollageApiController extends Controller
 
         $data = Cache::remember(ApiCache::KEY_DOODLES . '.payload', ApiCache::TTL, function () {
             return Doodle::select(['id', 'name', 'type', 'doodle_type', 'image', 'row_order'])
-                ->orderBy('row_order', 'ASC')
-                ->orderBy('id', 'ASC')
+                ->orderBy('row_order', 'DESC')
+                ->orderBy('id', 'DESC')
                 ->get()
                 ->map(function ($doodle) {
                     $image = null;
@@ -124,7 +125,7 @@ class CollageApiController extends Controller
                     return [
                         'id'          => $doodle->id,
                         'name'        => $doodle->name,
-                        'type'        => $doodle->type,
+                        'type'        => $doodle->type ?: 'free',
                         'doodle_type' => $doodle->doodle_type,
                         '_image'      => $image,
                     ];
@@ -136,7 +137,7 @@ class CollageApiController extends Controller
             return [
                 'id'              => $doodle['id'],
                 'name'            => $doodle['name'],
-                'type'            => $doodle['type'],
+                'type'            => $doodle['type'] ?: 'free',
                 'doodle_type'     => $doodle['doodle_type'],
                 'image_full_url'  => $doodle['_image'] ? $full_url . '/' . $doodle['_image'] : null,
             ];

@@ -24,22 +24,22 @@ class ApiCache
 
     public static function flushStickers(): void
     {
-        Cache::forget(self::KEY_STICKERS);
+        Cache::forget(self::KEY_STICKERS . '.payload');
     }
 
     public static function flushFonts(): void
     {
-        Cache::forget(self::KEY_FONTS);
+        Cache::forget(self::KEY_FONTS . '.payload');
     }
 
     public static function flushDoodles(): void
     {
-        Cache::forget(self::KEY_DOODLES);
+        Cache::forget(self::KEY_DOODLES . '.payload');
     }
 
     public static function flushBackgrounds(): void
     {
-        Cache::forget(self::KEY_BACKGROUNDS);
+        Cache::forget(self::KEY_BACKGROUNDS . '.payload');
     }
 
     public static function flushFilters(): void
