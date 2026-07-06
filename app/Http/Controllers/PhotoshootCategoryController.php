@@ -40,9 +40,7 @@ class PhotoshootCategoryController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'image' => 'required|image|mimes:webp',
-        ], [
-            'image.mimes' => 'Only .webp images are allowed.',
+            'image' => ['required', $this->webpRule()],
         ]);
 
         $categoryName = UniqueNamer::uniqueName('photoshoot_categories', 'name', $request->name);
@@ -73,9 +71,7 @@ class PhotoshootCategoryController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'image' => 'nullable|image|mimes:webp',
-        ], [
-            'image.mimes' => 'Only .webp images are allowed.',
+            'image' => ['nullable', $this->webpRule()],
         ]);
 
         $categoryName = UniqueNamer::uniqueName('photoshoot_categories', 'name', $request->name, $photoshootCategory->id);
@@ -134,5 +130,29 @@ class PhotoshootCategoryController extends Controller
         $category->save();
 
         return response()->json(['success' => true]);
+    }
+
+    /**
+     * Accept only .webp images, detecting the format from the file content via
+     * GD (getimagesize) rather than the server MIME/finfo guesser — which
+     * misidentifies webp on some Apache/Windows setups and wrongly rejects
+     * genuine .webp uploads. Falls back to the .webp extension.
+     */
+    private function webpRule(): \Closure
+    {
+        return function ($attribute, $value, $fail) {
+            if (!$value instanceof \Illuminate\Http\UploadedFile || !$value->isValid()) {
+                $fail('Only .webp images are allowed.');
+                return;
+            }
+
+            $info = @getimagesize($value->getPathname());
+            $isWebp = $info && isset($info[2]) && $info[2] === IMAGETYPE_WEBP;
+            $extWebp = strtolower($value->getClientOriginalExtension()) === 'webp';
+
+            if (!$isWebp && !$extWebp) {
+                $fail('Only .webp images are allowed.');
+            }
+        };
     }
 }
