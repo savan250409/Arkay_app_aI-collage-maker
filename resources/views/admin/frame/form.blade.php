@@ -77,7 +77,7 @@
                                                 <input type="hidden" name="existing_images[{{ $index }}]" value="{{ $img }}">
                                                 <input type="hidden" name="existing_thumbnails[{{ $index }}]" value="{{ $frame->frame_thumbnail[$index] ?? '' }}">
                                                 <input type="hidden" name="indices[]" value="{{ $index }}">
-                                                
+
                                                 <div class="row align-items-center">
                                                     <div class="col-md-1 text-center">
                                                         <i class="mdi mdi-drag-vertical drag-handle" style="font-size: 24px; color: #ccc; cursor: grab;" title="Drag to reorder"></i>
@@ -100,7 +100,7 @@
                                                     <div class="col-md-2 d-flex align-items-center justify-content-center" style="margin-top: 25px;">
                                                         <div class="form-check form-check-flat form-check-primary">
                                                             <label class="form-check-label">
-                                                                <input type="checkbox" class="form-check-input type-toggle" 
+                                                                <input type="checkbox" class="form-check-input type-toggle"
                                                                     {{ ($frame->image_types[$index] ?? 'free') == 'pro' ? 'checked' : '' }}>
                                                                 Pro
                                                                 <i class="input-helper"></i>
@@ -119,7 +119,7 @@
                                         @endif
                                     @endforeach
                                 @endif
-                                
+
                                 {{-- Initial Empty State for Create Mode --}}
                                 @if(!isset($frame))
                                     <div class="image-input-row mb-3 border p-2 rounded" style="background: #f9f9f9;">
@@ -209,13 +209,13 @@
 
             var imageInputIndex = {{ isset($frame) ? count($frame->images) : 1 }};
             // Ensure index is high enough to not collide if we start from 0
-            imageInputIndex = Math.max(imageInputIndex, 1000); 
+            imageInputIndex = Math.max(imageInputIndex, 1000);
 
             $('#add-image').click(function () {
                 imageInputIndex++;
                 var uniqueId = 'dropify-new-' + imageInputIndex;
                 var uniqueThumbId = 'dropify-thumb-' + imageInputIndex;
-                
+
                 var html = `<div class="image-input-row mb-3 border p-2 rounded" style="background: #f9f9f9;">
                                 <input type="hidden" name="item_type[]" value="new">
                                 <input type="hidden" name="indices[]" value="${imageInputIndex}">

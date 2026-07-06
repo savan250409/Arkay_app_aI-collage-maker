@@ -32,4 +32,8 @@ Route::middleware('api.auth')->group(function () {
 
     // Filter API
     Route::post('get_all_filter', [\App\Http\Controllers\Api\FilterApiController::class, 'getAllFilters']);
+
+    // Photoshoot API
+    Route::get('get_photoshoot_category', [\App\Http\Controllers\Api\PhotoshootApiController::class, 'get_photoshoot_category']);
+    Route::post('get_photoshoot_by_category_id', [\App\Http\Controllers\Api\PhotoshootApiController::class, 'get_photoshoot_by_category_id']);
 });

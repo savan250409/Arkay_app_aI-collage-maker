@@ -15,6 +15,7 @@ class ApiCache
     public const KEY_FRAME_CATEGORIES  = 'api.frame_categories';
     public const KEY_FILTERS           = 'api.filters';
     public const KEY_FRAMES_VERSION    = 'api.frames.version';
+    public const KEY_PHOTOSHOOT_CATEGORIES = 'api.photoshoot_categories';
 
     public static function frameByCategoryKey(int $categoryId): string
     {
@@ -52,5 +53,10 @@ class ApiCache
         Cache::forget(self::KEY_FRAME_CATEGORIES);
         $current = (int) Cache::get(self::KEY_FRAMES_VERSION, 0);
         Cache::forever(self::KEY_FRAMES_VERSION, $current + 1);
+    }
+
+    public static function flushPhotoshoots(): void
+    {
+        Cache::forget(self::KEY_PHOTOSHOOT_CATEGORIES . '.payload');
     }
 }

@@ -172,6 +172,60 @@
             </div>
         </div>
 
+        <!-- Photoshoot Categories API -->
+        <div class="col-md-6 grid-margin stretch-card">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">10. Get Photoshoot Categories</h4>
+                    <p class="card-description">
+                        <strong>Method:</strong> <span class="badge badge-info">GET</span>
+                    </p>
+                    <div class="bg-light p-3 rounded mb-3">
+                        <strong>URL:</strong><br>
+                        <code id="url-photoshoot-cat"></code>
+                    </div>
+                    <p><strong>Headers:</strong></p>
+                    <ul class="list-unstyled">
+                        <li><code class="text-danger">Authorization</code> : Bearer YOUR_API_TOKEN</li>
+                    </ul>
+                    <p><strong>Description:</strong></p>
+                    <p>Fetches the latest 5 photoshoot categories (image + name). URLs prefixed with
+                        <code>photoshoot/</code>.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Photoshoots By Category API -->
+        <div class="col-md-6 grid-margin stretch-card">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">11. Get Photoshoots By Category</h4>
+                    <p class="card-description">
+                        <strong>Method:</strong> <span class="badge badge-success">POST</span>
+                    </p>
+                    <div class="bg-light p-3 rounded mb-3">
+                        <strong>URL:</strong><br>
+                        <code id="url-photoshoot-by-id"></code>
+                    </div>
+                    <p><strong>Parameters:</strong></p>
+                    <ul class="list-unstyled">
+                        <li><code class="text-primary">category_id</code> (required)</li>
+                        <li><code class="text-primary">country</code> (optional) — lowercase code (e.g. <code>in</code>).
+                            Returns that country first, then records without a country; other countries are excluded.</li>
+                        <li><code class="text-primary">page</code> (optional) — page number. Page size is set by
+                            <code>PHOTOSHOOT_API_PER_PAGE</code> in the .env file.</li>
+                    </ul>
+                    <p><strong>Headers:</strong></p>
+                    <ul class="list-unstyled">
+                        <li><code class="text-danger">Authorization</code> : Bearer YOUR_API_TOKEN</li>
+                    </ul>
+                    <p><strong>Description:</strong></p>
+                    <p>Fetches paginated photoshoots for a specific category with optional country-first filtering.</p>
+                </div>
+            </div>
+        </div>
+
     </div>
 
 @endsection
@@ -190,6 +244,8 @@
             $('#url-frame-by-id').text(baseUrl + '/api/get_frame_by_category_id');
             $('#url-background').text(baseUrl + '/api/get_background');
             $('#url-get-all-filter').text(baseUrl + '/api/get_all_filter');
+            $('#url-photoshoot-cat').text(baseUrl + '/api/get_photoshoot_category');
+            $('#url-photoshoot-by-id').text(baseUrl + '/api/get_photoshoot_by_category_id');
         });
     </script>
 @endsection

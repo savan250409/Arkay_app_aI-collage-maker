@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat app/Support/ApiCache.php)",
+      "Bash(cat app/Support/UniqueNamer.php)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(rm -f /tmp/ps_test.php /tmp/ps_run.php)",
+      "Bash(php artisan *)"
+    ]
+  }
+}

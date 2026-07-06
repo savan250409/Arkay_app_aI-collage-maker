@@ -121,6 +121,7 @@
                             $filterActive = $matchRoute(['filter-categories', 'filters']);
                             $fontActive = $matchRoute(['fonts']);
                             $doodleActive = $matchRoute(['doodles']);
+                            $photoshootActive = $matchRoute(['photoshoot-categories', 'photoshoots']);
                             $apiListActive = $routeName === 'api-list';
                         @endphp
 
@@ -227,6 +228,29 @@
                                 </ul>
                             </div>
                         </li>
+                        <li class="nav-item {{ $photoshootActive ? 'active' : '' }}">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#photoshoot-menu"
+                                aria-expanded="{{ $photoshootActive ? 'true' : 'false' }}"
+                                aria-controls="photoshoot-menu">
+                                <span class="menu-title">Photoshoot</span>
+                                <i class="menu-arrow"></i>
+                                <i class="mdi mdi-camera-iris menu-icon"></i>
+                            </a>
+                            <div class="collapse {{ $photoshootActive ? 'show' : '' }}"
+                                id="photoshoot-menu">
+                                <ul class="nav flex-column sub-menu">
+                                    <li class="nav-item"> <a
+                                            class="nav-link {{ $matchRoute(['photoshoot-categories']) ? 'active' : '' }}"
+                                            href="{{ route('photoshoot-categories.index') }}">
+                                            Category </a></li>
+                                    <li class="nav-item"> <a
+                                            class="nav-link {{ $matchRoute(['photoshoots']) ? 'active' : '' }}"
+                                            href="{{ route('photoshoots.index') }}"> Photoshoot
+                                        </a></li>
+                                </ul>
+                            </div>
+                        </li>
+
                         <li class="nav-item {{ $apiListActive ? 'active' : '' }}">
                             <a class="nav-link" href="{{ route('api-list') }}">
                                 <span class="menu-title">API List</span>

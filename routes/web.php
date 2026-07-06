@@ -65,6 +65,11 @@ Route::middleware(['auth:admin'])->group(function () {
     Route::resource('background-categories', \App\Http\Controllers\BackgroundCategoryController::class);
     Route::resource('backgrounds', \App\Http\Controllers\BackgroundController::class);
 
+    // Photoshoot Module
+    Route::post('photoshoot-categories/update-active-status', [\App\Http\Controllers\PhotoshootCategoryController::class, 'updateActiveStatus'])->name('photoshoot-categories.update-active-status');
+    Route::resource('photoshoot-categories', \App\Http\Controllers\PhotoshootCategoryController::class);
+    Route::resource('photoshoots', \App\Http\Controllers\PhotoshootController::class);
+
     // System Management
     Route::post('clear-cache-logs', [\App\Http\Controllers\SystemController::class, 'clearCacheAndLogs'])->name('system.clear-cache-logs');
 
