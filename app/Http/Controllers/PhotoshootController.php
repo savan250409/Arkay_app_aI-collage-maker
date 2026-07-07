@@ -35,7 +35,7 @@ class PhotoshootController extends Controller
         } elseif ($country !== '') {
             $query->where('country', $country);
         }
-        $groups = $query->latest()->paginate($perPage);
+        $groups = $query->orderBy('id', 'desc')->paginate($perPage);
         $groups->appends([
             'search' => $search,
             'per_page' => $perPage,
@@ -43,8 +43,11 @@ class PhotoshootController extends Controller
             'country' => $country,
         ]);
 
-        if ($request->ajax()) {
-            return view('admin.photoshoot.index', compact('groups', 'categories', 'categoryId', 'countries', 'country'))->render();
+        // If a stale link points past the last page (e.g. rows were deleted after
+        // the previous view rendered), send the user to the last valid page
+        // instead of showing an empty table.
+        if ($request->filled('page') && $groups->total() > 0 && $groups->currentPage() > $groups->lastPage()) {
+            return redirect($request->fullUrlWithQuery(['page' => $groups->lastPage()]));
         }
 
         return view('admin.photoshoot.index', compact('groups', 'search', 'perPage', 'categories', 'categoryId', 'countries', 'country'));

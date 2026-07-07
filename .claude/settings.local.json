@@ -6,7 +6,8 @@
       "Bash(php -l app/Http/Controllers/StickerCategoryController.php)",
       "Bash(php -l app/Http/Controllers/Api/CollageApiController.php)",
       "Bash(php -l app/Http/Controllers/FilterCategoryController.php)",
-      "Bash(php -l app/Http/Controllers/Api/FilterApiController.php)"
+      "Bash(php -l app/Http/Controllers/Api/FilterApiController.php)",
+      "Bash(php -l app/Http/Controllers/PhotoshootController.php)"
     ]
   }
 }
