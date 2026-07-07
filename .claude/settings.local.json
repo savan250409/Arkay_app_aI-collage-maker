@@ -7,7 +7,20 @@
       "Bash(php -l app/Http/Controllers/Api/CollageApiController.php)",
       "Bash(php -l app/Http/Controllers/FilterCategoryController.php)",
       "Bash(php -l app/Http/Controllers/Api/FilterApiController.php)",
-      "Bash(php -l app/Http/Controllers/PhotoshootController.php)"
+      "Bash(php -l app/Http/Controllers/PhotoshootController.php)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"http://127.0.0.1:8000/photoshoots?per_page=10&page=2\")",
+      "Bash(curl -s -D - -o /dev/null \"http://127.0.0.1:8000/photoshoots?per_page=10&page=2\")",
+      "Bash(php -r \"echo 'opcache.enable='.ini_get\\('opcache.enable'\\).' enable_cli='.ini_get\\('opcache.enable_cli'\\).' validate_timestamps='.ini_get\\('opcache.validate_timestamps'\\).PHP_EOL;\")",
+      "Bash(netstat -ano)",
+      "PowerShell(Get-CimInstance Win32_Process -Filter \"ProcessId=1408\")",
+      "PowerShell(Stop-Process -Id 1408 -Force; Start-Sleep -Seconds 1; Write-Output \"old server stopped\"; $p = Start-Process -FilePath \"E:\\\\xampp\\\\php\\\\php.exe\" -ArgumentList 'artisan','serve','--host=127.0.0.1','--port=8000' -WorkingDirectory \"e:\\\\xampp\\\\htdocs\\\\savan_workspace\\\\A_git_code\\\\Arkay_app_aI-collage-maker\" -PassThru -WindowStyle Hidden; Start-Sleep -Seconds 3; Write-Output \"new server PID: $\\($p.Id\\)\")",
+      "Bash(curl -s -o /dev/null -w \"root=%{http_code} \" \"http://127.0.0.1:8000/\")",
+      "Bash(curl -s -o /dev/null -w \"photoshoots-p2=%{http_code}\\\\n\" \"http://127.0.0.1:8000/photoshoots?per_page=10&page=2\")",
+      "Bash(curl -s \"http://127.0.0.1:8000/__debug_ps?per_page=10&page=1\")",
+      "Bash(curl -s \"http://127.0.0.1:8000/__debug_ps?per_page=10&page=2\")",
+      "Bash(curl -s \"http://127.0.0.1:8000/__debug_ps?per_page=25&page=1\")",
+      "Bash(curl -s \"http://127.0.0.1:8000/__debug_ps?search=&per_page=10&category_id=&country=&page=1\")",
+      "Bash(curl -s \"http://127.0.0.1:8000/__debug_ps?search=&per_page=10&category_id=&country=&page=2\")"
     ]
   }
 }

@@ -13,10 +13,14 @@ class PhotoshootController extends Controller
     {
         session(['photoshoot_list_url' => $request->fullUrl()]);
 
-        $search = $request->input('search', '');
+        // Cast to string: the ConvertEmptyStringsToNull middleware turns an empty
+        // query param (e.g. ?country=) into null, and null slips past the
+        // `$country !== ''` check below, wrongly filtering `WHERE country IS NULL`
+        // (global rows store '' not NULL) and returning zero results.
+        $search = (string) $request->input('search', '');
         $perPage = $request->input('per_page', 10);
-        $categoryId = $request->input('category_id', '');
-        $country = $request->input('country', '');
+        $categoryId = (string) $request->input('category_id', '');
+        $country = (string) $request->input('country', '');
 
         $categories = PhotoshootCategory::orderBy('name')->get();
         $countries = Photoshoot::countries();

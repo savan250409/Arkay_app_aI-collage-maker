@@ -46,7 +46,7 @@
                         class="d-flex flex-wrap align-items-center mb-3" style="gap: 1rem;">
                         <label class="d-flex align-items-center mb-0" style="gap: 0.5rem;">
                             <span style="font-weight: normal; white-space: nowrap;">Show</span>
-                            <select name="per_page" class="form-control form-control-sm auto-submit" style="width:70px;height:32px;padding-right:22px;background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 fill=%22gray%22%3E%3Cpath d=%22M2 4l4 4 4-4%22/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 6px center;background-size:12px;appearance:none;-webkit-appearance:none;">
+                            <select name="per_page" onchange="this.form.submit()" class="form-control form-control-sm" style="width:70px;height:32px;padding-right:22px;background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 fill=%22gray%22%3E%3Cpath d=%22M2 4l4 4 4-4%22/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 6px center;background-size:12px;appearance:none;-webkit-appearance:none;">
                                 @foreach([10,25,50,100] as $pp)
                                     <option value="{{ $pp }}" {{ (int) $curPerPage === $pp ? 'selected' : '' }}>{{ $pp }}</option>
                                 @endforeach
@@ -54,14 +54,14 @@
                             <span style="font-weight: normal; white-space: nowrap;">entries</span>
                         </label>
 
-                        <select name="category_id" class="form-control form-control-sm auto-submit" style="height:32px;width:160px;flex-shrink:0;padding-right:22px;background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 fill=%22gray%22%3E%3Cpath d=%22M2 4l4 4 4-4%22/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 6px center;background-size:12px;appearance:none;-webkit-appearance:none;">
+                        <select name="category_id" onchange="this.form.submit()" class="form-control form-control-sm" style="height:32px;width:160px;flex-shrink:0;padding-right:22px;background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 fill=%22gray%22%3E%3Cpath d=%22M2 4l4 4 4-4%22/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 6px center;background-size:12px;appearance:none;-webkit-appearance:none;">
                             <option value="">All Categories</option>
                             @foreach($categories as $cat)
                                 <option value="{{ $cat->id }}" {{ (string) $curCategory === (string) $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
                             @endforeach
                         </select>
 
-                        <select name="country" class="form-control form-control-sm auto-submit" style="height:32px;width:150px;flex-shrink:0;padding-right:22px;background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 fill=%22gray%22%3E%3Cpath d=%22M2 4l4 4 4-4%22/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 6px center;background-size:12px;appearance:none;-webkit-appearance:none;">
+                        <select name="country" onchange="this.form.submit()" class="form-control form-control-sm" style="height:32px;width:150px;flex-shrink:0;padding-right:22px;background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 fill=%22gray%22%3E%3Cpath d=%22M2 4l4 4 4-4%22/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 6px center;background-size:12px;appearance:none;-webkit-appearance:none;">
                             <option value="">All Countries</option>
                             <option value="global" {{ $curCountry === 'global' ? 'selected' : '' }}>Global</option>
                             @foreach($countries as $code => $label)
@@ -80,7 +80,8 @@
                                     placeholder="Search category... (press Enter)" value="{{ $curSearch }}"
                                     style="border-left:0; padding-left:4px; box-shadow:none;">
                                 @if($curSearch !== '')
-                                    <div class="input-group-append" id="search-clear" style="cursor:pointer;">
+                                    <div class="input-group-append" style="cursor:pointer;"
+                                        onclick="document.getElementById('search-input').value=''; this.closest('form').submit();">
                                         <span class="input-group-text" style="background:#fff; border-left:0;">
                                             <i class="mdi mdi-close text-muted" style="font-size:14px; line-height:1;"></i>
                                         </span>
@@ -195,17 +196,6 @@
     <script>
         $(document).ready(function () {
             setTimeout(function () { $('#success-alert').fadeOut('fast'); }, 5000);
-
-            // Any select change reloads the page with the new query (resets to page 1).
-            $(document).on('change', '#filter-form .auto-submit', function () {
-                document.getElementById('filter-form').submit();
-            });
-
-            // Clear search -> submit empty.
-            $(document).on('click', '#search-clear', function () {
-                $('#search-input').val('');
-                document.getElementById('filter-form').submit();
-            });
 
             // Delete group
             $(document).on('click', '.delete-btn', function () {
