@@ -231,9 +231,10 @@ class PhotoshootController extends Controller
 
     public function edit(Photoshoot $photoshoot)
     {
+        $categories = PhotoshootCategory::orderBy('name')->get();
         $countries = Photoshoot::countries();
         $photoshoot->load('category');
-        return view('admin.photoshoot.form', compact('photoshoot', 'countries'));
+        return view('admin.photoshoot.form', compact('photoshoot', 'categories', 'countries'));
     }
 
     /**
@@ -244,6 +245,8 @@ class PhotoshootController extends Controller
     public function update(Request $request, Photoshoot $photoshoot)
     {
         $request->validate([
+            'photoshoot_category_id' => 'required|exists:photoshoot_categories,id',
+            'country' => 'nullable|string|max:5',
             'item_type' => 'nullable|array',
             'item_type.*' => 'in:existing,new',
             'item_name' => 'nullable|array',
@@ -259,11 +262,34 @@ class PhotoshootController extends Controller
             'bulk_hashtag' => 'nullable|string',
         ]);
 
-        $category = $photoshoot->category;
-        $path = $this->categoryPath($category->name);
-        if (!File::exists($path)) {
-            File::makeDirectory($path, 0777, true, true);
+        $oldCategory = $photoshoot->category;
+        $newCategory = PhotoshootCategory::findOrFail($request->photoshoot_category_id);
+        $targetCountry = $this->resolveCountry($request->input('country'));
+
+        $categoryChanged = !$oldCategory || $oldCategory->id !== $newCategory->id;
+        $countryChanged = $photoshoot->country !== $targetCountry;
+
+        // The (category, country) pair is unique. If the target slot is already
+        // taken by a different group, block the move instead of hitting a DB
+        // constraint error — merging two groups is not supported here.
+        if ($categoryChanged || $countryChanged) {
+            $conflict = Photoshoot::where('photoshoot_category_id', $newCategory->id)
+                ->where('country', $targetCountry)
+                ->where('id', '!=', $photoshoot->id)
+                ->exists();
+            if ($conflict) {
+                return back()->withInput()->withErrors([
+                    'country' => 'A photoshoot group for this category / country already exists. Edit that group instead of moving this one into it.',
+                ]);
+            }
         }
+
+        // New uploads and moved images land in the target category folder.
+        $newPath = $this->categoryPath($newCategory->name);
+        if (!File::exists($newPath)) {
+            File::makeDirectory($newPath, 0777, true, true);
+        }
+        $oldPath = $oldCategory ? $this->categoryPath($oldCategory->name) : $newPath;
 
         $types = $request->input('item_type', []);
         $names = $request->input('item_name', []);
@@ -287,15 +313,23 @@ class PhotoshootController extends Controller
                 if (!$image) {
                     continue;
                 }
-                $used[] = $image;
+                // When the category changes, the file lives in the old folder —
+                // copy it into the new folder (renaming on collision) so the
+                // reference stays valid. Copy, not move: other country groups in
+                // the old category may still use the same file.
+                if ($categoryChanged) {
+                    $image = $this->copyImageToCategory($oldPath, $newPath, $image, $used);
+                } else {
+                    $used[] = $image;
+                }
             } else {
                 $file = $newFiles[$newPtr] ?? null;
                 $newPtr++;
                 if (!$file) {
                     continue;
                 }
-                $image = $this->reserveImageName($path, $file->getClientOriginalName(), $used);
-                $file->move($path, $image);
+                $image = $this->reserveImageName($newPath, $file->getClientOriginalName(), $used);
+                $file->move($newPath, $image);
             }
 
             $domItems[] = ['name' => $name, 'hashtag' => $hashtag, 'image' => $image];
@@ -316,8 +350,8 @@ class PhotoshootController extends Controller
             }
 
             foreach ($bulkImages as $i => $file) {
-                $image = $this->reserveImageName($path, $file->getClientOriginalName(), $used);
-                $file->move($path, $image);
+                $image = $this->reserveImageName($newPath, $file->getClientOriginalName(), $used);
+                $file->move($newPath, $image);
                 $bulkItems[] = ['name' => $this->cleanName($bNames[$i]), 'hashtag' => $bHashtags[$i], 'image' => $image];
             }
         }
@@ -331,16 +365,32 @@ class PhotoshootController extends Controller
             ]);
         }
 
-        // Delete image files that were removed and are not used by any other group.
-        $oldImages = collect($photoshoot->items ?? [])->pluck('image')->filter()->all();
-        $keptImages = collect($finalItems)->pluck('image')->all();
-        $removed = array_diff($oldImages, $keptImages);
-        foreach ($removed as $img) {
-            $this->deleteImageIfUnreferenced($category, $img, $photoshoot->id, $keptImages);
+        // Clean up files left behind in the OLD category folder. When the
+        // category changed, the group is leaving that folder entirely, so its
+        // kept images no longer protect the old copies — only the old category's
+        // other groups do (keptImages passed empty). When it did not change, the
+        // usual "removed and unreferenced" cleanup applies.
+        if ($oldCategory) {
+            $oldImages = collect($photoshoot->items ?? [])->pluck('image')->filter()->all();
+            if ($categoryChanged) {
+                foreach ($oldImages as $img) {
+                    $this->deleteImageIfUnreferenced($oldCategory, $img, $photoshoot->id, []);
+                }
+            } else {
+                $keptImages = collect($finalItems)->pluck('image')->all();
+                $removed = array_diff($oldImages, $keptImages);
+                foreach ($removed as $img) {
+                    $this->deleteImageIfUnreferenced($oldCategory, $img, $photoshoot->id, $keptImages);
+                }
+            }
+            $this->deleteFolderIfEmpty($oldPath);
         }
-        $this->deleteFolderIfEmpty($this->categoryPath($category->name));
 
-        $photoshoot->update(['items' => $finalItems]);
+        $photoshoot->update([
+            'photoshoot_category_id' => $newCategory->id,
+            'country' => $targetCountry,
+            'items' => $finalItems,
+        ]);
 
         return redirect(session('photoshoot_list_url', route('photoshoots.index')))
             ->with('success', 'Photoshoot group updated successfully.');
@@ -447,6 +497,45 @@ class PhotoshootController extends Controller
         $lines = preg_split('/\r\n|\r|\n/', (string) $text);
         $lines = array_map('trim', $lines);
         return array_values(array_filter($lines, fn ($l) => $l !== ''));
+    }
+
+    /**
+     * Normalise a single submitted country value to a stored code: a valid
+     * lowercase country code, or the global sentinel ('') when empty/unknown.
+     */
+    private function resolveCountry($value): string
+    {
+        $value = strtolower(trim((string) $value));
+        if ($value === '') {
+            return Photoshoot::GLOBAL_COUNTRY;
+        }
+        $allowed = array_keys(Photoshoot::countries());
+        return in_array($value, $allowed, true) ? $value : Photoshoot::GLOBAL_COUNTRY;
+    }
+
+    /**
+     * Copy an existing image from the old category folder into the new one when
+     * a group changes category, reserving a unique name on collision. Returns
+     * the (possibly renamed) filename to reference in the new folder. Copies
+     * rather than moves so other country groups still in the old category keep
+     * their file; the old copy is cleaned up separately if unreferenced.
+     */
+    private function copyImageToCategory(string $oldPath, string $newPath, string $image, array &$used): string
+    {
+        $source = $oldPath . '/' . $image;
+
+        // Source already gone: reuse the same name if a file is there in the new
+        // folder, otherwise keep the reference as-is to avoid losing the item.
+        if (!File::exists($source)) {
+            if (!in_array($image, $used, true)) {
+                $used[] = $image;
+            }
+            return $image;
+        }
+
+        $target = $this->reserveImageName($newPath, $image, $used);
+        File::copy($source, $newPath . '/' . $target);
+        return $target;
     }
 
     /** De-duplicated list of valid lowercase country codes. */

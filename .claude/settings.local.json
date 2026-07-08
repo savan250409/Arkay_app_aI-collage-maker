@@ -20,7 +20,10 @@
       "Bash(curl -s \"http://127.0.0.1:8000/__debug_ps?per_page=10&page=2\")",
       "Bash(curl -s \"http://127.0.0.1:8000/__debug_ps?per_page=25&page=1\")",
       "Bash(curl -s \"http://127.0.0.1:8000/__debug_ps?search=&per_page=10&category_id=&country=&page=1\")",
-      "Bash(curl -s \"http://127.0.0.1:8000/__debug_ps?search=&per_page=10&category_id=&country=&page=2\")"
+      "Bash(curl -s \"http://127.0.0.1:8000/__debug_ps?search=&per_page=10&category_id=&country=&page=2\")",
+      "Bash(php -l app/Http/Controllers/Api/PhotoshootApiController.php)",
+      "Bash(php -r ' *)",
+      "Bash(echo \"---exit: $?\")"
     ]
   }
 }

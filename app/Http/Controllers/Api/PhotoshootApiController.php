@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Validator;
 class PhotoshootApiController extends Controller
 {
     /**
-     * Get the latest 5 photoshoot categories (image + name).
+     * Get all active photoshoot categories (image + name).
      */
     public function get_photoshoot_category()
     {
@@ -22,7 +22,6 @@ class PhotoshootApiController extends Controller
         $data = Cache::remember(ApiCache::KEY_PHOTOSHOOT_CATEGORIES . '.payload', ApiCache::TTL, function () {
             return PhotoshootCategory::where('is_active', 1)
                 ->orderBy('id', 'DESC')
-                ->limit(5)
                 ->get(['id', 'name', 'image'])
                 ->map(function ($category) {
                     return [

@@ -11,10 +11,6 @@
 @section('content')
     @php
         $selStyle = "appearance:none;-webkit-appearance:none;-moz-appearance:none;background-image:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 fill=%22gray%22%3E%3Cpath d=%22M2 4l4 4 4-4%22/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 10px center;background-size:12px;padding-right:30px;";
-        $countryLabel = null;
-        if (isset($photoshoot)) {
-            $countryLabel = $photoshoot->country === '' ? 'Global (no country)' : strtoupper($photoshoot->country);
-        }
     @endphp
 
     <style>
@@ -90,14 +86,33 @@
                             @csrf
                             @method('PUT')
 
+                            @php $selCountry = (string) old('country', $photoshoot->country); @endphp
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label-sm">Category</label>
-                                    <input type="text" class="form-control" value="{{ $photoshoot->category->name ?? 'N/A' }}" disabled>
+                                    <select class="form-control" name="photoshoot_category_id" required style="{{ $selStyle }}">
+                                        @foreach($categories as $category)
+                                            <option value="{{ $category->id }}"
+                                                {{ (string) old('photoshoot_category_id', $photoshoot->photoshoot_category_id) === (string) $category->id ? 'selected' : '' }}>
+                                                {{ $category->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('photoshoot_category_id')
+                                        <small class="text-danger">{{ $message }}</small>
+                                    @enderror
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label-sm">Country group</label>
-                                    <input type="text" class="form-control" value="{{ $countryLabel }}" disabled>
+                                    <select class="form-control" name="country" style="{{ $selStyle }}">
+                                        <option value="" {{ $selCountry === '' ? 'selected' : '' }}>Global (no country)</option>
+                                        @foreach($countries as $code => $label)
+                                            <option value="{{ $code }}" {{ $selCountry === (string) $code ? 'selected' : '' }}>{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('country')
+                                        <small class="text-danger">{{ $message }}</small>
+                                    @enderror
                                 </div>
                             </div>
 
