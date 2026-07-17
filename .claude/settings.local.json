@@ -23,7 +23,13 @@
       "Bash(curl -s \"http://127.0.0.1:8000/__debug_ps?search=&per_page=10&category_id=&country=&page=2\")",
       "Bash(php -l app/Http/Controllers/Api/PhotoshootApiController.php)",
       "Bash(php -r ' *)",
-      "Bash(echo \"---exit: $?\")"
+      "Bash(echo \"---exit: $?\")",
+      "Bash(node -e ' *)",
+      "Bash(timeout 60 npx prisma migrate status)",
+      "Bash(npx prisma *)"
+    ],
+    "additionalDirectories": [
+      "e:\\Ai-prompt"
     ]
   }
 }

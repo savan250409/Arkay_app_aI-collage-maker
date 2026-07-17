@@ -19,6 +19,10 @@
                                 style="border: 1px solid #e3e3e3;">
                                 <i class="mdi mdi-layers-outline mr-1"></i> Total: {{ $categories->total() }} Categories
                             </div>
+                            <button type="button" id="open-index-modal" class="btn btn-outline-primary btn-sm btn-icon-text"
+                                style="padding: 0.5rem 0.8rem;">
+                                <i class="mdi mdi-sort btn-icon-prepend"></i> Index
+                            </button>
                             <a href="{{ route('photoshoot-categories.create') }}" class="btn btn-primary btn-sm btn-icon-text"
                                 style="padding: 0.5rem 0.8rem;">
                                 <i class="mdi mdi-plus btn-icon-prepend"></i> Add Category
@@ -125,12 +129,104 @@
             </div>
         </div>
     </div>
+
+    @isset($allCategories)
+        {{-- Reorder popup: drag categories; top = shown first (admin list + API). --}}
+        <div class="modal fade" id="index-modal" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-scrollable" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title mb-0" style="font-weight:bold;">
+                            <i class="mdi mdi-sort-variant mr-1 text-primary"></i> Category Index Order
+                        </h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted mb-3" style="font-size:13px;">
+                            Drag to reorder. <b>Top = shown first</b> in the app. New categories appear on top automatically.
+                        </p>
+                        <ul id="index-sortable" class="list-unstyled mb-0">
+                            @foreach($allCategories as $cat)
+                                <li class="index-item d-flex align-items-center p-2 mb-2" data-id="{{ $cat->id }}">
+                                    <i class="mdi mdi-drag-vertical" style="font-size:22px; color:#b66dff;"></i>
+                                    <span class="index-id mx-2">#{{ $cat->id }}</span>
+                                    <img src="{{ asset('upload/photoshoot/' . $cat->name . '/category image/' . $cat->image) }}"
+                                        alt="" style="width:36px; height:36px; object-fit:cover; border-radius:6px; margin-right:10px;">
+                                    <span style="font-weight:600;">{{ $cat->name }}</span>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-light" data-dismiss="modal">Cancel</button>
+                        <button type="button" id="save-index-order" class="btn btn-primary">Save Order</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endisset
 @endsection
 
 @section('scripts')
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.14.0/Sortable.min.js"></script>
+    <style>
+        #index-sortable .index-item { border: 1px solid #eee; border-radius: 8px; background: #fff; cursor: grab; }
+        #index-sortable .index-item:active { cursor: grabbing; }
+        #index-sortable .index-ghost { opacity: .45; background: #ede0ff; }
+        #index-sortable .index-id { display: inline-block; min-width: 40px; text-align: center; padding: 3px 8px;
+            border: 1px solid #e6d9fb; border-radius: 12px; background: #f4eefc; color: #7a4fd0 !important;
+            font-size: 12px; font-weight: 700; line-height: 1.4; }
+    </style>
     <script>
         $(document).ready(function () {
+            // ---- Category reorder popup ----
+            $('#open-index-modal').on('click', function () {
+                $('#index-modal').modal('show');
+            });
+
+            // Close (× / Cancel) bound explicitly, so it works regardless of the
+            // template's Bootstrap data-dismiss wiring. Backdrop click also closes.
+            $('#index-modal').on('click', '.close, [data-dismiss="modal"]', function () {
+                $('#index-modal').modal('hide');
+            });
+            $('#index-modal').on('click', function (e) {
+                if (e.target === this) { $('#index-modal').modal('hide'); }
+            });
+
+            var indexEl = document.getElementById('index-sortable');
+            if (window.Sortable && indexEl) {
+                Sortable.create(indexEl, { animation: 150, ghostClass: 'index-ghost' });
+            }
+
+            $('#save-index-order').on('click', function () {
+                var order = $('#index-sortable .index-item').map(function () {
+                    return $(this).data('id');
+                }).get();
+                if (!order.length) { return; }
+
+                var $btn = $(this).prop('disabled', true);
+                $.ajax({
+                    url: "{{ route('photoshoot-categories.update-order') }}",
+                    type: 'POST',
+                    data: { _token: '{{ csrf_token() }}', order: order },
+                    success: function (res) {
+                        if (res && res.success) {
+                            Swal.fire({ icon: 'success', title: 'Order saved', timer: 1500, showConfirmButton: false })
+                                .then(function () { location.reload(); });
+                        } else {
+                            $btn.prop('disabled', false);
+                        }
+                    },
+                    error: function () {
+                        $btn.prop('disabled', false);
+                        Swal.fire({ icon: 'error', title: 'Could not save order', text: 'Please try again.' });
+                    }
+                });
+            });
+
             $(document).on('click', '.delete-btn', function () {
                 var url = $(this).data('url');
                 var row = $(this).closest('tr');

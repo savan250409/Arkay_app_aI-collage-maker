@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Photoshoot;
 use App\Models\PhotoshootCategory;
+use App\Support\ApiCache;
 use App\Support\UniqueNamer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
@@ -21,14 +22,18 @@ class PhotoshootCategoryController extends Controller
         if ($search) {
             $query->where('name', 'like', '%' . $search . '%');
         }
-        $categories = $query->latest()->paginate($perPage);
+        // Manual order first (lower sort_order = shown first), newest id as tiebreak.
+        $categories = $query->orderBy('sort_order')->orderBy('id', 'desc')->paginate($perPage);
         $categories->appends(['search' => $search, 'per_page' => $perPage]);
 
         if ($request->ajax()) {
             return view('admin.photoshoot_category.index', compact('categories'))->render();
         }
 
-        return view('admin.photoshoot_category.index', compact('categories', 'search', 'perPage'));
+        // Full list (unpaginated, in the same order) for the reorder popup.
+        $allCategories = PhotoshootCategory::orderBy('sort_order')->orderBy('id', 'desc')->get();
+
+        return view('admin.photoshoot_category.index', compact('categories', 'search', 'perPage', 'allCategories'));
     }
 
     public function create()
@@ -57,6 +62,8 @@ class PhotoshootCategoryController extends Controller
             'name' => $categoryName,
             'image' => $imageName,
             'is_active' => $request->has('is_active') ? 1 : 0,
+            // New category goes to the top (smaller sort_order = shown first).
+            'sort_order' => (int) PhotoshootCategory::min('sort_order') - 1,
         ]);
 
         return redirect(session('photoshoot_cat_list_url', route('photoshoot-categories.index')))->with('success', 'Category created successfully.');
@@ -128,6 +135,28 @@ class PhotoshootCategoryController extends Controller
         $category = PhotoshootCategory::find($request->id);
         $category->is_active = $request->status;
         $category->save();
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Persist the manual category order from the reorder popup. Receives the
+     * category ids in the desired top-to-bottom order; the first id gets the
+     * lowest sort_order, so it shows first in the admin list and the API.
+     */
+    public function updateOrder(Request $request)
+    {
+        $request->validate([
+            'order' => 'required|array|min:1',
+            'order.*' => 'integer|exists:photoshoot_categories,id',
+        ]);
+
+        foreach ($request->input('order') as $position => $id) {
+            PhotoshootCategory::where('id', $id)->update(['sort_order' => $position]);
+        }
+
+        // Category order feeds the API payload, so refresh the cached response.
+        ApiCache::flushPhotoshoots();
 
         return response()->json(['success' => true]);
     }

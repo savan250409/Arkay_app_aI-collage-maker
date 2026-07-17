@@ -10,7 +10,7 @@ class PhotoshootCategory extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'image', 'is_active'];
+    protected $fillable = ['name', 'image', 'is_active', 'sort_order'];
 
     protected static function booted(): void
     {

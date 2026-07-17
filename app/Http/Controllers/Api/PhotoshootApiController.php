@@ -21,6 +21,7 @@ class PhotoshootApiController extends Controller
 
         $data = Cache::remember(ApiCache::KEY_PHOTOSHOOT_CATEGORIES . '.payload', ApiCache::TTL, function () {
             return PhotoshootCategory::where('is_active', 1)
+                ->orderBy('sort_order')
                 ->orderBy('id', 'DESC')
                 ->get(['id', 'name', 'image'])
                 ->map(function ($category) {

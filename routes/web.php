@@ -67,6 +67,7 @@ Route::middleware(['auth:admin'])->group(function () {
 
     // Photoshoot Module
     Route::post('photoshoot-categories/update-active-status', [\App\Http\Controllers\PhotoshootCategoryController::class, 'updateActiveStatus'])->name('photoshoot-categories.update-active-status');
+    Route::post('photoshoot-categories/update-order', [\App\Http\Controllers\PhotoshootCategoryController::class, 'updateOrder'])->name('photoshoot-categories.update-order');
     Route::resource('photoshoot-categories', \App\Http\Controllers\PhotoshootCategoryController::class);
     Route::resource('photoshoots', \App\Http\Controllers\PhotoshootController::class);
 
