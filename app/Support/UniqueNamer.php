@@ -21,17 +21,22 @@ class UniqueNamer
         return $name . '_' . time();
     }
 
-    public static function uniqueFile(string $directory, string $filename): string
+    public static function uniqueFile(string $directory, string $filename, array &$used = []): string
     {
-        $target = rtrim($directory, '/\\') . DIRECTORY_SEPARATOR . $filename;
-
-        if (!File::exists($target)) {
-            return $filename;
-        }
-
         $ext = pathinfo($filename, PATHINFO_EXTENSION);
         $base = pathinfo($filename, PATHINFO_FILENAME);
+        $dir  = rtrim($directory, '/\\');
 
-        return $base . '_' . time() . ($ext !== '' ? '.' . $ext : '');
+        $candidate = $filename;
+        $counter   = 0;
+
+        while (File::exists($dir . DIRECTORY_SEPARATOR . $candidate) || in_array($candidate, $used)) {
+            $counter++;
+            $suffix    = time() . ($counter > 1 ? '_' . $counter : '');
+            $candidate = $base . '_' . $suffix . ($ext !== '' ? '.' . $ext : '');
+        }
+
+        $used[] = $candidate;
+        return $candidate;
     }
 }

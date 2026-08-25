@@ -85,11 +85,13 @@ class FrameController extends Controller
         $storedCounts = [];
         $storedTypes = [];
         $storedThumbnails = [];
+        $usedImages = [];
+        $usedThumbs = [];
 
         foreach ($request->indices as $key => $index) {
             if ($request->hasFile("images.$index")) {
                 $image = $request->file("images")[$index];
-                $imageName = UniqueNamer::uniqueFile($frameFolder, $image->getClientOriginalName());
+                $imageName = UniqueNamer::uniqueFile($frameFolder, $image->getClientOriginalName(), $usedImages);
                 $image->move($frameFolder, $imageName);
                 $storedImages[] = $imageName;
                 $storedCounts[] = $request->counts[$key];
@@ -97,7 +99,7 @@ class FrameController extends Controller
 
                 if ($request->hasFile("frame_thumbnail.$index")) {
                     $thumb = $request->file("frame_thumbnail")[$index];
-                    $thumbName = UniqueNamer::uniqueFile($thumbFolder, $thumb->getClientOriginalName());
+                    $thumbName = UniqueNamer::uniqueFile($thumbFolder, $thumb->getClientOriginalName(), $usedThumbs);
                     $thumb->move($thumbFolder, $thumbName);
                     $storedThumbnails[] = $thumbName;
                 } else {
@@ -159,6 +161,8 @@ class FrameController extends Controller
         $storedCounts = [];
         $storedTypes = [];
         $storedThumbnails = [];
+        $usedImages = [];
+        $usedThumbs = [];
 
         // Track what existing images we are keeping
         $keptExistingImages = [];
@@ -169,13 +173,13 @@ class FrameController extends Controller
             if ($type == 'new') {
                 if ($request->hasFile("images.$index")) {
                     $image = $request->file("images")[$index];
-                    $imageName = UniqueNamer::uniqueFile($frameFolder, $image->getClientOriginalName());
+                    $imageName = UniqueNamer::uniqueFile($frameFolder, $image->getClientOriginalName(), $usedImages);
                     $image->move($frameFolder, $imageName);
                     $storedImages[] = $imageName;
 
                     if ($request->hasFile("frame_thumbnail.$index")) {
                         $thumb = $request->file("frame_thumbnail")[$index];
-                        $thumbName = UniqueNamer::uniqueFile($thumbFolder, $thumb->getClientOriginalName());
+                        $thumbName = UniqueNamer::uniqueFile($thumbFolder, $thumb->getClientOriginalName(), $usedThumbs);
                         $thumb->move($thumbFolder, $thumbName);
                         $storedThumbnails[] = $thumbName;
                     } else {
@@ -186,30 +190,32 @@ class FrameController extends Controller
                 $existingImage = $request->input("existing_images.$index");
 
                 if ($request->hasFile("images.$index")) {
-                    // New image uploaded, so we don't keep the existing one
+                    // New image uploaded for existing slot — old file will be deleted in cleanup
                     $image = $request->file("images")[$index];
-                    $imageName = UniqueNamer::uniqueFile($frameFolder, $image->getClientOriginalName());
+                    $imageName = UniqueNamer::uniqueFile($frameFolder, $image->getClientOriginalName(), $usedImages);
                     $image->move($frameFolder, $imageName);
                     $storedImages[] = $imageName;
                 } else {
                     $storedImages[] = $existingImage;
                     if ($existingImage) {
                         $keptExistingImages[] = $existingImage;
+                        $usedImages[] = $existingImage;
                     }
                 }
 
                 $existingThumb = $request->input("existing_thumbnails.$index");
 
                 if ($request->hasFile("frame_thumbnail.$index")) {
-                    // New thumbnail uploaded
+                    // New thumbnail uploaded for existing slot — old file will be deleted in cleanup
                     $thumb = $request->file("frame_thumbnail")[$index];
-                    $thumbName = UniqueNamer::uniqueFile($thumbFolder, $thumb->getClientOriginalName());
+                    $thumbName = UniqueNamer::uniqueFile($thumbFolder, $thumb->getClientOriginalName(), $usedThumbs);
                     $thumb->move($thumbFolder, $thumbName);
                     $storedThumbnails[] = $thumbName;
                 } else {
                     $storedThumbnails[] = $existingThumb;
                     if ($existingThumb) {
                         $keptExistingThumbnails[] = $existingThumb;
+                        $usedThumbs[] = $existingThumb;
                     }
                 }
             }

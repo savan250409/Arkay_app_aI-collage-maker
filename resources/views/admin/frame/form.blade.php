@@ -189,6 +189,17 @@
                 imgFileExtensions: ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp']
             });
 
+            // Prevent double-submit / duplicate frame creation
+            $('.forms-sample').on('submit', function () {
+                var $btn = $(this).find('[type="submit"]');
+                if ($btn.data('submitted')) {
+                    return false;
+                }
+                $btn.data('submitted', true)
+                    .prop('disabled', true)
+                    .text('{{ isset($frame) ? "Updating..." : "Submitting..." }}');
+            });
+
             var el = document.getElementById('sortable-images');
             var sortable = new Sortable(el, {
                 animation: 150,
